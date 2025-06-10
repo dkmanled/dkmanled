@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<title>Test Page</title>
+<style>
+        .note { color: blue; }
+    </style>
+</head>
+<body>
+<header>
+<h2>New Header</h2>
+</header>
+<div id="main-content">
+<p>Inserted before intro paragraph using tag and class.</p><p class="intro">This is the first paragraph.</p><p>Inserted after intro paragraph using selector.</p>
+<p>This is the second paragraph with <span class="note">a note</span>.</p>
+<p>Appended to div#main-content via target-id only.</p></div>
+<div id="sidebar">
+<h2>Sidebar</h2>
+<ul><li>New item prepended to ul via selector</li>
+<li>Item A</li>
+<li>Item B</li>
+</ul>
+</div>
+<footer>
+<p>Original Footer</p>
+</footer>
+<div>Appended to body via target-tag.</div></body>
+</html>
