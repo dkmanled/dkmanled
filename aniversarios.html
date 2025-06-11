@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabla Interactiva de Aniversarios de Localidades</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 30px 40px 40px 40px; /* Ajuste de padding */
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #0056b3; /* Azul oscuro */
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        .filters-container { /* Renombrado para claridad */
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            margin-bottom: 30px;
+            padding-bottom: 25px;
+            border-bottom: 1px solid #dee2e6;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .filter-group { /* Renombrado */
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        label {
+            font-size: 0.95em;
+            color: #34495e; /* Gris azulado */
+            font-weight: 500;
+        }
+        select {
+            padding: 10px 14px;
+            border: 1px solid #bdc3c7; /* Gris claro */
+            border-radius: 6px;
+            min-width: 200px;
+            font-size: 1em;
+            background-color: #fff;
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+        select:focus {
+            outline: none;
+            border-color: #007bff; /* Azul al enfocar */
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            border-bottom: 1px solid #e9ecef;
+            padding: 12px 15px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #007bff;
+            color: #ffffff;
+            font-weight: 600;
+            text-transform: capitalize;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
+        }
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        tbody tr:hover {
+            background-color: #cfe2ff;
+        }
+        td:first-child { /* Columna Fecha */
+            width: 90px;
+            text-align: center;
+            font-weight: 500;
+        }
+        /* td for Información column would now be td:nth-last-child(2) if specific styling is needed */
+        td:last-child { /* Columna Presupuesto */
+            text-align: center;
+            font-size: 0.95em; /* Keep consistent with previous 'Información' column styling */
+            color: #555; /* Keep consistent with previous 'Información' column styling */
+        }
+        .no-results-message { /* Clase específica para el mensaje */
+            text-align: center;
+            padding: 25px;
+            color: #7f8c8d;
+            font-style: italic;
+            background-color: #fff !important;
+        }
+        @media (max-width: 650px) {
+            .filters-container {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 20px;
+            }
+            .filter-group select {
+                width: 100%;
+                min-width: unset;
+            }
+            table {
+                display: block;
+                overflow-x: auto;
+                white-space: nowrap;
+            }
+            thead, tbody, tr { display: block; }
+            th, td { display: inline-block; width: auto; }
+            /* Opcional: Ocultar columnas en móvil si es necesario */
+            /* th:nth-child(3), td:nth-child(3) { display: none; } */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Aniversarios de Localidades Argentinas</h1>
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="monthFilter">Filtrar por Mes:</label>
+                <select id="monthFilter">
+                    <option value="">Todos los meses</option>
+                    <option value="1">Enero</option>
+                    <option value="2">Febrero</option>
+                    <option value="3">Marzo</option>
+                    <option value="4">Abril</option>
+                    <option value="5">Mayo</option>
+                    <option value="6">Junio</option>
+                    <option value="7">Julio</option>
+                    <option value="8">Agosto</option>
+                    <option value="9">Septiembre</option>
+                    <option value="10">Octubre</option>
+                    <option value="11">Noviembre</option>
+                    <option value="12">Diciembre</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="weekFilter">Filtrar por Semana:</label>
+                <select id="weekFilter">
+                    <option value="">Todas las semanas</option>
+                    <option value="1">Semana 1 (días 1-7)</option>
+                    <option value="2">Semana 2 (días 8-14)</option>
+                    <option value="3">Semana 3 (días 15-21)</option>
+                    <option value="4">Semana 4 (días 22-28)</option>
+                    <option value="5">Semana 5 (días 29+)</option>
+                </select>
+            </div>
+        </div>
+        <table id="anniversaryTable">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Ciudad</th>
+                    <th>Provincia</th>
+                    <th>Información</th>
+                    <th>Presupuesto</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <!-- Las filas se generarán aquí por JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        // --- DATOS DE ANIVERSARIOS ---
+        const anniversaries = [
+            // Enero
+            { day: 1, month: 1, city: "Villa de Merlo", province: "San Luis", info: "Refundación 1797" },
+            { day: 1, month: 1, city: "SILVA", province: "SANTA FE", info: "Fundación 1892." },
+            { day: 1, month: 1, city: "VILLA ESPAÑA", province: "BUENOS AIRES", info: "Inauguración estación 1895." },
+            { day: 1, month: 1, city: "CARLOS TOMAS SOURIGUES", province: "BUENOS AIRES", info: "Inauguración estación 1872." },
+            { day: 1, month: 1, city: "ALPA CORRAL", province: "CÓRDOBA", info: "Referencia a Merced de Tierras (1673). Fecha simbólica." },
+            { day: 1, month: 1, city: "VILLA MUGUETA", province: "SANTA FE", info: "Fundación 1892." },
+            { day: 1, month: 1, city: "VICENTE LOPEZ", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1863). Municipio creado 1905." },
+            { day: 1, month: 1, city: "CARMEN DE ARECO", province: "BUENOS AIRES", info: "Referencia a nombramiento del primer Alcalde de Hermandad (1812)." },
+            { day: 2, month: 1, city: "COGHLAN", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 2, month: 1, city: "VILLA BOSCH (EST. JUAN MARIA BOSCH)", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 2, month: 1, city: "VILLA RAMALLO", province: "BUENOS AIRES", info: "Fundación 1886." },
+            { day: 3, month: 1, city: "GENERAL MANSILLA", province: "BUENOS AIRES", info: "Fundación Estación Bartolomé Bavio 1887." },
+            { day: 3, month: 1, city: "CONESA", province: "BUENOS AIRES", info: "Fundación 1884." },
+            { day: 3, month: 1, city: "TEZANOS PINTO", province: "ENTRE RÍOS", info: "Fundación 1910." },
+            { day: 3, month: 1, city: "CORONEL BOGADO", province: "SANTA FE", info: "Fundación 1909." },
+            { day: 4, month: 1, city: "José Marmol", province: "BUENOS AIRES", info: "Habilitación estación de tren 1884" },
+            { day: 4, month: 1, city: "CORONEL DORREGO", province: "BUENOS AIRES", info: "Fundación 1887." },
+            { day: 5, month: 1, city: "Colonia Hinojo", province: "BUENOS AIRES", info: "Llegada de los primeros colonos alemanes del Volga 1878" },
+            { day: 7, month: 1, city: "TRES LOMAS", province: "BUENOS AIRES", info: "Fundación 1906." },
+            { day: 8, month: 1, city: "CARLOS CASARES", province: "BUENOS AIRES", info: "Fundación 1889." },
+            { day: 10, month: 1, city: "GENERAL PACHECO", province: "BUENOS AIRES", info: "Fundación 1876." },
+            { day: 12, month: 1, city: "VILLA DOLORES", province: "CÓRDOBA", info: "Fundación 1853" },
+            { day: 14, month: 1, city: "BARREAL", province: "SAN JUAN", info: "Fundación 1866." },
+            { day: 14, month: 1, city: "SAN HILARIO", province: "FORMOSA", info: "Referencia a Fiesta Patronal (San Hilario)." },
+            { day: 19, month: 1, city: "MAQUINCHAO", province: "RÍO NEGRO", info: "Fundación 1905." },
+            { day: 20, month: 1, city: "VILLA PEHUENIA", province: "NEUQUÉN", info: "Fundación 1989." },
+            { day: 20, month: 1, city: "MOQUEHUE", province: "NEUQUÉN", info: "Parte de Villa Pehuenia." },
+            { day: 20, month: 1, city: "SAN FABIAN", province: "SANTA FE", info: "Referencia a Fiesta Patronal (San Fabián)." },
+            { day: 21, month: 1, city: "CARHUE", province: "BUENOS AIRES", info: "Fundación 1877." },
+            { day: 22, month: 1, city: "EL MAITEN", province: "CHUBUT", info: "Fundación 1939." },
+            { day: 22, month: 1, city: "CAÑUELAS", province: "BUENOS AIRES", info: "Creación del Partido 1822." },
+            { day: 23, month: 1, city: "CARRO QUEMADO", province: "LA PAMPA", info: "Fundación 1924." },
+            { day: 24, month: 1, city: "Aimogasta", province: "La Rioja", info: "Fundación 1643" },
+            { day: 26, month: 1, city: "VILLA ORTUZAR", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 26, month: 1, city: "MARTIN CORONADO", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 27, month: 1, city: "RESISTENCIA", province: "CHACO", info: "Fundación 1878." },
+            { day: 28, month: 1, city: "ENRIQUE CARBO", province: "ENTRE RÍOS", info: "Inauguración estación de tren 1907." },
+            { day: 29, month: 1, city: "BRANDSEN", province: "BUENOS AIRES", info: "Creación del Partido 1875" },
+            { day: 31, month: 1, city: "LOBERIA", province: "BUENOS AIRES", info: "Fundación 1891." },
+            { day: 31, month: 1, city: "LAS HERAS", province: "MENDOZA", info: "Fundación 1871." },
+            { day: 31, month: 1, city: "CANDELARIA", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (Virgen de la Candelaria)." },
+
+            // Febrero
+            { day: 1, month: 2, city: "LEONES", province: "CÓRDOBA", info: "Referencia a habilitación estación / trazado urbano 1887." },
+            { day: 1, month: 2, city: "COGHLAN", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 1, month: 2, city: "VILLA BOSCH (EST. JUAN MARIA BOSCH)", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 1, month: 2, city: "VILLA RAMALLO", province: "BUENOS AIRES", info: "Fundación 1886." },
+            { day: 2, month: 2, city: "VILLA GUASAYAN", province: "SANTIAGO DEL ESTERO", info: "Referencia a Fiesta Patronal (Virgen de la Candelaria)." },
+            { day: 2, month: 2, city: "CAMINIAGA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Virgen de la Candelaria)." },
+            { day: 2, month: 2, city: "NONOGASTA", province: "LA RIOJA", info: "Referencia a Fiesta Patronal (Virgen de la Candelaria)." },
+            { day: 2, month: 2, city: "SANTA MARIA", province: "CATAMARCA", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Candelaria). Origen antiguo." },
+            { day: 2, month: 2, city: "COPACABANA", province: "CATAMARCA", info: "Referencia a Fiesta Patronal (Virgen de la Candelaria)." },
+            { day: 2, month: 2, city: "VILLA CANDELARIA NORTE", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Virgen de la Candelaria)." },
+            { day: 3, month: 2, city: "GENERAL MANSILLA", province: "BUENOS AIRES", info: "Fundación Estación Bartolomé Bavio 1887." },
+            { day: 3, month: 2, city: "CONESA", province: "BUENOS AIRES", info: "Fundación 1884." },
+            { day: 3, month: 2, city: "TEZANOS PINTO", province: "ENTRE RÍOS", info: "Fundación 1910." },
+            { day: 3, month: 2, city: "CORONEL BOGADO", province: "SANTA FE", info: "Fundación 1909." },
+            { day: 4, month: 2, city: "San Martín de los Andes", province: "Neuquén", info: "Fundación 1898" },
+            { day: 4, month: 2, city: "YAPEYU", province: "CORRIENTES", info: "Fundación 1627." },
+            { day: 8, month: 2, city: "ESQUINA", province: "CORRIENTES", info: "Fundación 1806." },
+            { day: 8, month: 2, city: "VALERIA DEL MAR", province: "BUENOS AIRES", info: "Fundación 1947." },
+            { day: 9, month: 2, city: "GENERAL MANSILLA", province: "BUENOS AIRES", info: "Fundación Estación Bartolomé Bavio 1887." },
+            { day: 10, month: 2, city: "MAR DEL PLATA", province: "BUENOS AIRES", info: "Fundación 1874." },
+            { day: 10, month: 2, city: "ALVEAR", province: "CORRIENTES", info: "Fundación 1863." },
+            { day: 11, month: 2, city: "EL COLORADO", province: "FORMOSA", info: "Fundación 1912." },
+            { day: 12, month: 2, city: "SAN COSME", province: "CORRIENTES", info: "Creación del Municipio 1825." },
+            { day: 13, month: 2, city: "BANDERALO", province: "BUENOS AIRES", info: "Fundación 1890." },
+            { day: 14, month: 2, city: "PINAMAR", province: "BUENOS AIRES", info: "Fundación 1943." },
+            { day: 14, month: 2, city: "GRANADERO BAIGORRIA", province: "SANTA FE", info: "Referencia a habilitación estación de tren (1888)." },
+            { day: 15, month: 2, city: "Barker", province: "BUENOS AIRES", info: "Fundación 1906" },
+            { day: 15, month: 2, city: "Villa Cacique", province: "BUENOS AIRES", info: "Se toma fecha de Barker (contigua)" },
+            { day: 15, month: 2, city: "GOWLAND", province: "BUENOS AIRES", info: "Fundación 1888." },
+            { day: 15, month: 2, city: "SANTA ROSA", province: "MENDOZA", info: "Creación del Departamento 1884." },
+            { day: 15, month: 2, city: "JUNIN DE LOS ANDES", province: "NEUQUÉN", info: "Fundación 1883." },
+            { day: 15, month: 2, city: "CABALLITO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 18, month: 2, city: "COLONIA TIROLESA", province: "CÓRDOBA", info: "Fundación 1891." },
+            { day: 18, month: 2, city: "VILLA DEL NAHUEVE", province: "NEUQUÉN", info: "Fundación 1970." },
+            { day: 19, month: 2, city: "Chilecito", province: "La Rioja", info: "Fundación 1715" },
+            { day: 19, month: 2, city: "ORO VERDE", province: "ENTRE RÍOS", info: "Referencia a creación de la Estación Experimental Agropecuaria 1949." },
+            { day: 20, month: 2, city: "JUBILEO", province: "ENTRE RÍOS", info: "Fundación 1902." },
+            { day: 22, month: 2, city: "USPALLATA", province: "MENDOZA", info: "Referencia histórica (Paso de los Andes)." },
+            { day: 23, month: 2, city: "BERABEVU", province: "SANTA FE", info: "Fundación 1901." },
+            { day: 23, month: 2, city: "COMODORO RIVADAVIA", province: "CHUBUT", info: "Fundación 1901." },
+            { day: 24, month: 2, city: "RAMON SANTAMARINA", province: "BUENOS AIRES", info: "Fundación 1910." },
+            { day: 24, month: 2, city: "LOS POLVORINES", province: "BUENOS AIRES", info: "Referencia a Día de la Localidad." },
+            { day: 25, month: 2, city: "CIUDAD DEL LIBERTADOR GENERAL SAN MARTIN", province: "BUENOS AIRES", info: "Fundación Partido 1864." },
+            { day: 26, month: 2, city: "BARRANCAS", province: "NEUQUÉN", info: "Fundación 1889." },
+            { day: 27, month: 2, city: "MARGARITA BELEN", province: "CHACO", info: "Fundación 1890." },
+            { day: 27, month: 2, city: "DIAMANTE", province: "ENTRE RÍOS", info: "Fundación 1836." },
+
+            // Marzo
+            { day: 1, month: 3, city: "RAWSON", province: "BUENOS AIRES", info: "Referencia a habilitación estación de tren (1885)." },
+            { day: 1, month: 3, city: "ITALO", province: "CÓRDOBA", info: "Fundación 1901." },
+            { day: 1, month: 3, city: "MANUEL OCAMPO", province: "BUENOS AIRES", info: "Fundación 1910." },
+            { day: 1, month: 3, city: "JUAN ANCHORENA", province: "BUENOS AIRES", info: "Fundación 1910 (Est. La Moderna)." },
+            { day: 1, month: 3, city: "PILCANIYEU", province: "RÍO NEGRO", info: "Fundación 1896." },
+            { day: 2, month: 3, city: "Mendoza (Capital)", province: "Mendoza", info: "Fundación 1561" },
+            { day: 2, month: 3, city: "REALICO", province: "LA PAMPA", info: "Fundación 1907." },
+            { day: 3, month: 3, city: "PERGAMINO", province: "BUENOS AIRES", info: "Referencia a Batalla de Cepeda (1820). Origen Jesuítico." },
+            { day: 3, month: 3, city: "PUNTA LARA", province: "BUENOS AIRES", info: "Referencia a fundación de escuela (1914), fecha adoptada." },
+            { day: 3, month: 3, city: "RECREO", province: "CATAMARCA", info: "Fundación 1875." },
+            { day: 3, month: 3, city: "MANFREDI", province: "CÓRDOBA", info: "Referencia a fundación de la Estación Experimental Agropecuaria (1903)." },
+            { day: 4, month: 3, city: "LA PELADA", province: "SANTA FE", info: "Fundación 1888." },
+            { day: 5, month: 3, city: "Colonia Hinojo", province: "BUENOS AIRES", info: "Llegada de los primeros colonos alemanes del Volga 1878" },
+            { day: 5, month: 3, city: "BRAGADO", province: "BUENOS AIRES", info: "Fundación 1851." },
+            { day: 5, month: 3, city: "GUALJAINA", province: "CHUBUT", info: "Fundación 1928." },
+            { day: 7, month: 3, city: "SANTO TOME", province: "SANTA FE", info: "Referencia a Fiesta Patronal (Santo Tomás de Aquino). Origen antiguo." },
+            { day: 7, month: 3, city: "CARMEN DE PATAGONES", province: "BUENOS AIRES", info: "Referencia a Defensa de la Soberanía 1827." },
+            { day: 8, month: 3, city: "BATAN", province: "BUENOS AIRES", info: "Fundación 1888." },
+            { day: 9, month: 3, city: "DEAN FUNES", province: "CÓRDOBA", info: "Fundación 1875." },
+            { day: 9, month: 3, city: "SANTA MARGARITA", province: "SANTA FE", info: "Fundación 1910." },
+            { day: 10, month: 3, city: "JUSTO DARACT", province: "SAN LUIS", info: "Fundación 1906." },
+            { day: 11, month: 3, city: "Los Conquistadores", province: "Entre Ríos", info: "Creación Junta de Fomento 1939" },
+            { day: 11, month: 3, city: "RICARDONE", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 11, month: 3, city: "POZO BORRADO", province: "SANTA FE", info: "Fundación 1914." },
+            { day: 13, month: 3, city: "SAN CAYETANO", province: "BUENOS AIRES", info: "Fundación 1911." },
+            { day: 14, month: 3, city: "Carrenleufu", province: "Chubut", info: "Creación Comisión de Fomento 1985" },
+            { day: 14, month: 3, city: "GATO COLORADO", province: "SANTA FE", info: "Creación de la Comuna 1940." },
+            { day: 14, month: 3, city: "GENERAL ENRIQUE GODOY", province: "RÍO NEGRO", info: "Creación Comisión de Fomento 1933. Origen ligado a estación (1924)." },
+            { day: 15, month: 3, city: "Pearson", province: "Buenos Aires", info: "Fecha fundacional 1909" },
+            { day: 15, month: 3, city: "Espigas", province: "Buenos Aires", info: "Fecha fundacional 1911" },
+            { day: 15, month: 3, city: "O'HIGGINS", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1886)." },
+            { day: 15, month: 3, city: "DE LA GARMA", province: "BUENOS AIRES", info: "Fundación 1912." },
+            { day: 15, month: 3, city: "CAVANAGH", province: "CÓRDOBA", info: "Fundación 1902." },
+            { day: 15, month: 3, city: "VILLA ANGELICA", province: "BUENOS AIRES", info: "Fundación 1882 (Est. Urquiza)." },
+            { day: 15, month: 3, city: "GUERRICO", province: "BUENOS AIRES", info: "Fundación 1882." },
+            { day: 16, month: 3, city: "MATILDE", province: "SANTA FE", info: "Fundación 1880." },
+            { day: 17, month: 3, city: "GABOTO", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 17, month: 3, city: "VILLA EL SALVADOR", province: "SAN JUAN", info: "Fundación 1888." },
+            { day: 18, month: 3, city: "LAS PAREJAS", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 18, month: 3, city: "EL PARAISO", province: "BUENOS AIRES", info: "Fundación 1887." },
+            { day: 18, month: 3, city: "VILLA REAL", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 19, month: 3, city: "La Caldera", province: "Salta", info: "Referencia Fiesta Patronal San José" },
+            { day: 19, month: 3, city: "San Jose", province: "Catamarca", info: "Referencia Fiesta Patronal San José" },
+            { day: 19, month: 3, city: "CLASSON", province: "SANTA FE", info: "Referencia a Fiesta Patronal (San José)." },
+            { day: 19, month: 3, city: "CHABAS", province: "SANTA FE", info: "Referencia a Fiesta Patronal (San José). Origen ligado al ferrocarril (1888)." },
+            { day: 19, month: 3, city: "CARRILOBO", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San José)." },
+            { day: 19, month: 3, city: "PEDERNAL", province: "ENTRE RÍOS", info: "Referencia a Fiesta Patronal (San José)." },
+            { day: 19, month: 3, city: "SAN JOSE DEL BOQUERON", province: "SANTIAGO DEL ESTERO", info: "Referencia a Fiesta Patronal (San José)." },
+            { day: 19, month: 3, city: "VILLA YACANTO", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San José). Fundación 1939." },
+            { day: 19, month: 3, city: "SAN JOSE DE FELICIANO", province: "ENTRE RÍOS", info: "Referencia a Fiesta Patronal." },
+            { day: 19, month: 3, city: "CORTADERAS", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (San José)." },
+            { day: 19, month: 3, city: "CARPINTERIA", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (San José)." },
+            { day: 19, month: 3, city: "GRAN GUARDIA", province: "FORMOSA", info: "Fundación 1914." },
+            { day: 19, month: 3, city: "VILLA SAN JOSE DE VINCHINA", province: "LA RIOJA", info: "Referencia a Fiesta Patronal (San José). Origen 1688." },
+            { day: 19, month: 3, city: "COLONIA SAN JUSTO", province: "ENTRE RÍOS", info: "Referencia a Fiesta Patronal (San José)." },
+            { day: 20, month: 3, city: "LABORDEBOY", province: "SANTA FE", info: "Fundación 1911." },
+            { day: 20, month: 3, city: "ALMAFUERTE", province: "MISIONES", info: "Fundación 1952." },
+            { day: 21, month: 3, city: "GENERAL VILLEGAS", province: "BUENOS AIRES", info: "Fundación 1886." },
+            { day: 21, month: 3, city: "GENERAL O'BRIEN", province: "BUENOS AIRES", info: "Fundación 1909." },
+            { day: 21, month: 3, city: "CANNING", province: "BUENOS AIRES", info: "Referencia a fundación de Estación de Tren 1911. Crecimiento recente como área residencial." },
+            { day: 22, month: 3, city: "VILLA LLANQUIN", province: "RÍO NEGRO", info: "Fundación 1940." },
+            { day: 23, month: 3, city: "INGENIERO FOSTER", province: "LA PAMPA", info: "Fundación 1909." },
+            { day: 24, month: 3, city: "SAENZ PEÑA", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 25, month: 3, city: "SANTA MARIA NORTE", province: "SANTA FE", info: "Fundación 1875." },
+            { day: 25, month: 3, city: "SAN FRANCISCO DE LAISHI", province: "FORMOSA", info: "Fundación de la Misión 1901." },
+            { day: 25, month: 3, city: "LAS FLORES", province: "BUENOS AIRES", info: "Fundación 1856." },
+            { day: 26, month: 3, city: "MARIANO H.  ALFONZO", province: "BUENOS AIRES", info: "Fundación 1911." },
+            { day: 26, month: 3, city: "PLOTTIER", province: "NEUQUÉN", info: "Fundación 1935." },
+            { day: 26, month: 3, city: "La Punta", province: "San Luis", info: "Fundación 2003" },
+            { day: 26, month: 3, city: "PEYRANO", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 26, month: 3, city: "LIMAY MAHUIDA", province: "LA PAMPA", info: "Fundación 1915." },
+            { day: 28, month: 3, city: "JUAN N. FERNANDEZ", province: "BUENOS AIRES", info: "Fundación 1909." },
+            { day: 28, month: 3, city: "PARQUE AVELLANEDA", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a inauguración del Parque (1914)." },
+            { day: 28, month: 3, city: "CORONDA", province: "SANTA FE", info: "Fundación 1664." },
+            { day: 29, month: 3, city: "RIO COLORADO", province: "RÍO NEGRO", info: "Fundación 1901." },
+            { day: 29, month: 3, city: "VILLA ADELINA", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1909)." },
+            { day: 30, month: 3, city: "GERLI", province: "BUENOS AIRES", info: "Fundación 1909." },
+            { day: 30, month: 3, city: "CAPILLA DEL MONTE", province: "CÓRDOBA", info: "Fundación 1585 (merced de tierras)." },
+            { day: 30, month: 3, city: "CHASCOMUS", province: "BUENOS AIRES", info: "Fundación 1779." },
+            { day: 31, month: 3, city: "VILLA NUEVA", province: "MENDOZA", info: "Fundación 1896." },
+            { day: 31, month: 3, city: "FLORES", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a creación de la Parroquia San José de Flores (1806)." },
+
+            // Abril
+            { day: 1, month: 4, city: "GENERAL GELLY", province: "SANTA FE", info: "Fundación 1908." },
+            { day: 1, month: 4, city: "MAZA", province: "BUENOS AIRES", info: "Fundación 1906." },
+            { day: 1, month: 4, city: "MAIPU", province: "BUENOS AIRES", info: "Fundación 1878." },
+            { day: 1, month: 4, city: "BALVANERA", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 1, month: 4, city: "MONTE HERMOSO", province: "BUENOS AIRES", info: "Fundación 1918." },
+            { day: 1, month: 4, city: "ALTO RIO SENGUER", province: "CHUBUT", info: "Fundación 1943." },
+            { day: 1, month: 4, city: "CARAPACHAY", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1943)." },
+            { day: 2, month: 4, city: "San Rafael", province: "Mendoza", info: "Fundación 1805" },
+            { day: 2, month: 4, city: "PUERTO ARGENTINO", province: "TIERRA DEL FUEGO, ANTÁRTIDA E ISLAS DEL ATLÁNTICO SUR", info: "Día del Veterano y de los Caídos en la Guerra de Malvinas." },
+            { day: 2, month: 4, city: "ZENON PEREYRA", province: "SANTA FE", info: "Fundación 1891." },
+            { day: 3, month: 4, city: "MONTE GRANDE", province: "BUENOS AIRES", info: "Fundación 1889." },
+            { day: 3, month: 4, city: "COLONIA 3 DE ABRIL", province: "CORRIENTES", info: "Referencia en nombre a fecha fundacional probable (ca. 1910) / Creación Municipio 2016." },
+            { day: 3, month: 4, city: "WINIFREDA", province: "LA PAMPA", info: "Fundación 1915." },
+            { day: 3, month: 4, city: "VILLA ADELINA", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1909)." },
+            { day: 4, month: 4, city: "BOUQUET", province: "SANTA FE", info: "Fundación 1912." },
+            { day: 5, month: 4, city: "CASBAS", province: "BUENOS AIRES", info: "Fundación 1911." },
+            { day: 6, month: 4, city: "OSTENDE", province: "BUENOS AIRES", info: "Fundación 1913." },
+            { day: 6, month: 4, city: "TIMBUES", province: "SANTA FE", info: "Fundación 1870." },
+            { day: 6, month: 4, city: "BARRANQUERAS", province: "CHACO", info: "Fundación 1907." },
+            { day: 7, month: 4, city: "NUESTRA SEÑORA DEL ROSARIO DE CAA CATI", province: "CORRIENTES", info: "Fundación 1764." },
+            { day: 7, month: 4, city: "EL AGUILAR", province: "JUJUY", info: "Fundación 1929 (asentamiento minero)." },
+            { day: 8, month: 4, city: "FORMOSA", province: "FORMOSA", info: "Fundación 1879." },
+            { day: 8, month: 4, city: "LAGUNA ALSINA", province: "BUENOS AIRES", info: "Referencia a habilitación Estación de Tren (Bonifacio) 1902." },
+            { day: 8, month: 4, city: "PIEDRA DEL AGUILA", province: "NEUQUÉN", info: "Fundación 1897." },
+            { day: 8, month: 4, city: "ALTA GRACIA", province: "CÓRDOBA", info: "Fundación 1643." },
+            { day: 9, month: 4, city: "9 DE ABRIL", province: "BUENOS AIRES", info: "Creación del Partido de Esteban Echeverría 1913." },
+            { day: 10, month: 4, city: "RAFAEL OBLIGADO", province: "BUENOS AIRES", info: "Fundación 1909." },
+            { day: 10, month: 4, city: "BERNARDO LARROUDE", province: "LA PAMPA", info: "Fundación 1908." },
+            { day: 11, month: 4, city: "CIUDAD JARDIN LOMAS DEL PALOMAR", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 12, month: 4, city: "ARROYO SECO", province: "SANTA FE", info: "Fundación 1889." },
+            { day: 12, month: 4, city: "TRENQUE LAUQUEN", province: "BUENOS AIRES", info: "Fundación 1876." },
+            { day: 12, month: 4, city: "MORENO", province: "BUENOS AIRES", info: "Fundación 1860." },
+            { day: 13, month: 4, city: "MATADEROS", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a inauguración Mataderos (1889)." },
+            { day: 14, month: 4, city: "BASAIL", province: "CHACO", info: "Referencia a inauguración estación 1915." },
+            { day: 14, month: 4, city: "VILLA DEVOTO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 14, month: 4, city: "PONTEVEDRA", province: "BUENOS AIRES", info: "Fundación 1872." },
+            { day: 14, month: 4, city: "EMPEDRADO", province: "CORRIENTES", info: "Fundación 1826." },
+            { day: 14, month: 4, city: "PANAMBI", province: "MISIONES", info: "Creación del Municipio 1938." },
+            { day: 14, month: 4, city: "FORTIN OLMOS", province: "SANTA FE", info: "Fundación 1904." },
+            { day: 14, month: 4, city: "SAN NICOLAS DE LOS ARROYOS", province: "BUENOS AIRES", info: "Fundación 1748." },
+            { day: 15, month: 4, city: "LAS LAJITAS", province: "SALTA", info: "Fundación 1914." },
+            { day: 15, month: 4, city: "JUAN MARIA GUTIERREZ", province: "BUENOS AIRES", info: "Inauguración estación 1884." },
+            { day: 16, month: 4, city: "Salta (Capital)", province: "Salta", info: "Fundación 1582" },
+            { day: 17, month: 4, city: "EMILIO V. BUNGE", province: "BUENOS AIRES", info: "Fundación 1905." },
+            { day: 18, month: 4, city: "RIVADAVIA", province: "MENDOZA", info: "Fundación 1884." },
+            { day: 19, month: 4, city: "Chamical", province: "La Rioja", info: "Fundación 1955" },
+            { day: 19, month: 4, city: "Yerba Buena", province: "Tucumán", info: "Creación Municipio 1946" },
+            { day: 19, month: 4, city: "SAN SALVADOR DE JUJUY", province: "JUJUY", info: "Fundación 1593." },
+            { day: 19, month: 4, city: "GUATRACHE", province: "LA PAMPA", info: "Fundación 1908." },
+            { day: 19, month: 4, city: "FAMATINA", province: "LA RIOJA", info: "Fundación 1592." },
+            { day: 19, month: 4, city: "PASO DEL SAPO", province: "CHUBUT", info: "Creación de la Comisión de Fomento 1944." },
+            { day: 20, month: 4, city: "Lago Blanco", province: "Chubut", info: "Fecha fundacional 1921" },
+            { day: 20, month: 4, city: "HUINGANCO", province: "NEUQUÉN", info: "Fundación 1964." },
+            { day: 20, month: 4, city: "SPELUZZI", province: "LA PAMPA", info: "Fundación 1907." },
+            { day: 21, month: 4, city: "RIVERA", province: "BUENOS AIRES", info: "Fundación 1905." },
+            { day: 21, month: 4, city: "ESPARTILLAR", province: "BUENOS AIRES", info: "Fundación 1905." },
+            { day: 21, month: 4, city: "LUCAS GONZALEZ", province: "ENTRE RÍOS", info: "Fundación 1888." },
+            { day: 21, month: 4, city: "CHOVET", province: "SANTA FE", info: "Fundación 1922." },
+            { day: 21, month: 4, city: "CASEROS", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 21, month: 4, city: "JOAQUIN V. GONZALEZ", province: "SALTA", info: "Fundación 1908." },
+            { day: 22, month: 4, city: "Viedma", province: "Río Negro", info: "Fundación 1779" },
+            { day: 22, month: 4, city: "SANTA ROSA", province: "LA PAMPA", info: "Fundación 1892." },
+            { day: 22, month: 4, city: "AMENABAR", province: "SANTA FE", info: "Fundación 1903." },
+            { day: 22, month: 4, city: "GARRE", province: "BUENOS AIRES", info: "Referencia a habilitación Estación de Tren (1907)." },
+            { day: 23, month: 4, city: "GONZALEZ MORENO", province: "BUENOS AIRES", info: "Fundación 1903." },
+            { day: 23, month: 4, city: "ROMANG", province: "SANTA FE", info: "Fundación 1873." },
+            { day: 24, month: 4, city: "SAAVEDRA", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 24, month: 4, city: "SAENZ PEÑA", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 25, month: 4, city: "CARNERILLO", province: "CÓRDOBA", info: "Referencia a habilitación Estación de Tren 1911." },
+            { day: 25, month: 4, city: "AGRONOMIA", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 26, month: 4, city: "Venado Tuerto", province: "Santa Fe", info: "Fecha fundacional 1884" },
+            { day: 26, month: 4, city: "VILLA ORTUZAR", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 26, month: 4, city: "ALGARROBO DEL AGUILA", province: "LA PAMPA", info: "Fundación 1905." },
+            { day: 27, month: 4, city: "Reconquista", province: "Santa Fe", info: "Fecha fundacional 1872" },
+            { day: 27, month: 4, city: "Gancedo", province: "Chaco", info: "Fundación 1937" },
+            { day: 27, month: 4, city: "OBISPO TREJO", province: "CÓRDOBA", info: "Fundación 1890." },
+            { day: 27, month: 4, city: "JOSE INGENIEROS", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 27, month: 4, city: "RANELAGH", province: "BUENOS AIRES", info: "Fundación 1911." },
+            { day: 29, month: 4, city: "INGENIERO SILVEYRA", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1886)." },
+            { day: 30, month: 4, city: "MUNRO", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1912)." },
+
+            // Mayo
+            { day: 1, month: 5, city: "PALMIRA", province: "MENDOZA", info: "Referencia a inauguración estación de tren 1885." },
+            { day: 1, month: 5, city: "ALPACHIRI", province: "LA PAMPA", info: "Fundación 1910." },
+            { day: 1, month: 5, city: "LAS JUNTURAS", province: "CÓRDOBA", info: "Fundación 1914." },
+            { day: 1, month: 5, city: "UCACHA", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 1, month: 5, city: "EL TALAR", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 3, month: 5, city: "LUCA", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 3, month: 5, city: "SAN CARLOS DE BARILOCHE", province: "RÍO NEGRO", info: "Fundación 1902." },
+            { day: 3, month: 5, city: "VILLA SANTA CRUZ DEL LAGO", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Cruz)." },
+            { day: 3, month: 5, city: "NOGOLI", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (Señor de Renca)." },
+            { day: 3, month: 5, city: "THEOBALD", province: "SANTA FE", info: "Referencia a Fiesta Patronal (Santa Cruz)." },
+            { day: 3, month: 5, city: "VILLA DE LA QUEBRADA", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (Cristo de la Quebrada)." },
+            { day: 3, month: 5, city: "SAN MIGUEL", province: "BUENOS AIRES", info: "Creación del Municipio 1994." },
+            { day: 4, month: 5, city: "MONTECARLO", province: "MISIONES", info: "Fundación 1920." },
+            { day: 5, month: 5, city: "SAN MANUEL", province: "BUENOS AIRES", info: "Fundación 1929." },
+            { day: 5, month: 5, city: "ENSENADA", province: "BUENOS AIRES", info: "Fundación 1801." },
+            { day: 5, month: 5, city: "CALEUFU", province: "LA PAMPA", info: "Fundación 1911." },
+            { day: 5, month: 5, city: "INGENIERO MIGUEL SAJAROFF", province: "ENTRE RÍOS", info: "Referencia a inauguración estación de tren 1907." },
+            { day: 6, month: 5, city: "CHILLAR", province: "BUENOS AIRES", info: "Fundación 1912." },
+            { day: 6, month: 5, city: "VILLA MARTELLI", province: "BUENOS AIRES", info: "Fecha de creación del barrio (1910)." },
+            { day: 6, month: 5, city: "JARDIN AMERICA", province: "MISIONES", info: "Fundación 1946." },
+            { day: 6, month: 5, city: "POZO DEL MOLLE", province: "CÓRDOBA", info: "Fundación 1904." },
+            { day: 8, month: 5, city: "PUERTO VILELAS", province: "CHACO", info: "Referencia a Fiesta Patronal (Virgen de Luján)." },
+            { day: 9, month: 5, city: "SAN FRANCISCO", province: "CÓRDOBA", info: "Fundación 1886." },
+            { day: 10, month: 5, city: "MARIANO ACOSTA", province: "BUENOS AIRES", info: "Inauguración Estación 1910." },
+            { day: 10, month: 5, city: "GENERAL ROCA", province: "CÓRDOBA", info: "Fundación 1902." },
+            { day: 10, month: 5, city: "VILLA JOSE LEON SUAREZ", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 11, month: 5, city: "Godoy Cruz (Villa San Vicente)", province: "Mendoza", info: "Fundación 1855" },
+            { day: 11, month: 5, city: "SALLIQUELO", province: "BUENOS AIRES", info: "Fundación 1903." },
+            { day: 12, month: 5, city: "INGENIERO LUIS A. HUERGO", province: "RÍO NEGRO", info: "Referencia a creación Comisión de Fomento 1933. Origen ligado a estación de tren (1924)." },
+            { day: 12, month: 5, city: "GENERAL RODRGUEZ", province: "BUENOS AIRES", info: "Fundación 1864." },
+            { day: 13, month: 5, city: "LA HIGUERA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Virgen de Fátima)." },
+            { day: 14, month: 5, city: "Maipú", province: "Mendoza", info: "Fundación 1858" },
+            { day: 14, month: 5, city: "MONTE CASTRO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 14, month: 5, city: "BASAIL", province: "CHACO", info: "Referencia a inauguración estación 1915." },
+            { day: 14, month: 5, city: "GENERAL SAN MARTIN", province: "LA PAMPA", info: "Fundación 1906." },
+            { day: 15, month: 5, city: "GENERAL RACEDO", province: "ENTRE RÍOS", info: "Inauguración estación de tren 1907." },
+            { day: 15, month: 5, city: "FRAY LUIS BELTRAN", province: "SANTA FE", info: "Fundación 1912." },
+            { day: 15, month: 5, city: "JOCOLI", province: "MENDOZA", info: "Referencia a Fiesta Patronal (San Isidro Labrador)." },
+            { day: 15, month: 5, city: "VIAMONTE", province: "CÓRDOBA", info: "Fundación 1910." },
+            { day: 15, month: 5, city: "SAN ISIDRO", province: "BUENOS AIRES", info: "Fiesta Patronal (San Isidro Labrador). Creación del Partido 1784." },
+            { day: 15, month: 5, city: "PASO DEL DURAZNO", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Isidro Labrador)." },
+            { day: 15, month: 5, city: "ACASSUSO", province: "BUENOS AIRES", info: "Aniversario del Partido de San Isidro." },
+            { day: 15, month: 5, city: "MARTINEZ", province: "BUENOS AIRES", info: "Aniversario del Partido de San Isidro." },
+            { day: 15, month: 5, city: "EL GALPON", province: "SALTA", info: "Referencia a Fiesta Patronal (San Isidro Labrador). Fundación 1886." },
+            { day: 15, month: 5, city: "SAN ISIDRO", province: "CATAMARCA", info: "Referencia a Fiesta Patronal (San Isidro Labrador)." },
+            { day: 15, month: 5, city: "PARQUE CHACABUCO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a inauguración del parque (1909)." },
+            { day: 15, month: 5, city: "CHAVARRIA", province: "CORRIENTES", info: "Fundación 1896." },
+            { day: 15, month: 5, city: "EL MOLLAR", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (San Isidro Labrador)." },
+            { day: 16, month: 5, city: "VERSALLES", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 16, month: 5, city: "AMERICA", province: "BUENOS AIRES", info: "Fundación 1904." },
+            { day: 17, month: 5, city: "VILLA CAÑAS", province: "SANTA FE", info: "Fundación 1902." },
+            { day: 18, month: 5, city: "GUAYMALLEN", province: "MENDOZA", info: "Creación del Departamento 1858." },
+            { day: 18, month: 5, city: "MUÑIZ", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 18, month: 5, city: "BELLA VISTA", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 19, month: 5, city: "VARVARCO", province: "NEUQUÉN", info: "Fundación 1882." },
+            { day: 20, month: 5, city: "La Rioja (Capital)", province: "La Rioja", info: "Fundación 1591" },
+            { day: 20, month: 5, city: "TAFI VIEJO", province: "TUCUMÁN", info: "Fundación 1900." },
+            { day: 21, month: 5, city: "ALDEA SAN SIMON", province: "ENTRE RÍOS", info: "Fundación 1878." },
+            { day: 22, month: 5, city: "CASTILLA", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1885)." },
+            { day: 22, month: 5, city: "VILLALONGA", province: "BUENOS AIRES", info: "Fundación 1928." },
+            { day: 23, month: 5, city: "PERUGORRIA", province: "CORRIENTES", info: "Fundación 1888." },
+            { day: 24, month: 5, city: "VILLA ANGELA", province: "CHACO", info: "Fundación 1910." },
+            { day: 24, month: 5, city: "GOYENA", province: "BUENOS AIRES", info: "Fundación 1904." },
+            { day: 24, month: 5, city: "HERNANDO", province: "CÓRDOBA", info: "Fundación 1912." },
+            { day: 24, month: 5, city: "SAENZ PEÑA", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 25, month: 5, city: "BENGOLEA", province: "CÓRDOBA", info: "Fundación 1911." },
+            { day: 25, month: 5, city: "GENERAL URQUIZA", province: "MISIONES", info: "Fundación 1954." },
+            { day: 25, month: 5, city: "PICADA BERON", province: "ENTRE RÍOS", info: "Referencia histórica." },
+            { day: 25, month: 5, city: "POZO DE MAZA", province: "FORMOSA", info: "Fundación 1935." },
+            { day: 26, month: 5, city: "Metán", province: "Salta", info: "Fundación 1859" },
+            { day: 26, month: 5, city: "SAN JOSE DE METAN", province: "SALTA", info: "Fundación 1859." },
+            { day: 27, month: 5, city: "UNANUE", province: "LA PAMPA", info: "Fundación 1904." },
+            { day: 28, month: 5, city: "JUAN N. FERNANDEZ", province: "BUENOS AIRES", info: "Fundación 1909." },
+            { day: 29, month: 5, city: "COMANDANTE NICANOR OTAMENDI", province: "BUENOS AIRES", info: "Fundación 1911." },
+            { day: 29, month: 5, city: "COLONIA LIEBIG'S", province: "CORRIENTES", info: "Fundación 1924." },
+            { day: 30, month: 5, city: "CHASCOMUS", province: "BUENOS AIRES", info: "Fundación 1779." },
+            { day: 31, month: 5, city: "SAN LUIS DEL PALMAR", province: "CORRIENTES", info: "Fundación 1806." },
+            { day: 31, month: 5, city: "VILLA NUEVA", province: "MENDOZA", info: "Fundación 1896." },
+            { day: 31, month: 5, city: "FLORES", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a creación de la Parroquia San José de Flores (1806)." },
+
+            // Junio
+            { day: 1, month: 6, city: "YERBA BUENA - MARCOS PAZ", province: "TUCUMÁN", info: "Creación del Municipio 1976 (integrando Yerba Buena y Marcos Paz)." },
+            { day: 1, month: 6, city: "CORPUS", province: "MISIONES", info: "Referencia a Fiesta Patronal (Corpus Christi). Origen Jesuítico 1622." },
+            { day: 2, month: 6, city: "Tafí Viejo", province: "Tucumán", info: "Fundación 1900" },
+            { day: 2, month: 6, city: "PIEDRITAS", province: "BUENOS AIRES", info: "Fundación 1909." },
+            { day: 3, month: 6, city: "BELLA VISTA", province: "CORRIENTES", info: "Fundación 1825." },
+            { day: 3, month: 6, city: "MONTE DE LOS GAUCHOS", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 5, month: 6, city: "VILLA MINETTI", province: "SANTA FE", info: "Fundación 1939." },
+            { day: 5, month: 6, city: "BEAZLEY", province: "SAN LUIS", info: "Fundación 1905." },
+            { day: 6, month: 6, city: "CHILLAR", province: "BUENOS AIRES", info: "Fundación 1912." },
+            { day: 7, month: 6, city: "ITA IBATE", province: "CORRIENTES", info: "Fundación 1877." },
+            { day: 8, month: 6, city: "VERA Y PINTADO", province: "SANTA FE", info: "Creación de la Comuna 1953." },
+            { day: 9, month: 6, city: "CAÑADA ROSQUIN", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 10, month: 6, city: "ELISA", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 10, month: 6, city: "CARLOS SPEGAZZINI", province: "BUENOS AIRES", info: "Fundación 1948." },
+            { day: 11, month: 6, city: "VILLA CRESPO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 12, month: 6, city: "CAPITAN SARMIENTO", province: "BUENOS AIRES", info: "Fundación 1884." },
+            { day: 13, month: 6, city: "San Juan (Capital)", province: "San Juan", info: "Fundación 1562" },
+            { day: 13, month: 6, city: "Tartagal", province: "Salta", info: "Fundación 1924" },
+            { day: 13, month: 6, city: "ALPACHIRI", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (San Antonio de Padua)." },
+            { day: 13, month: 6, city: "EL SOMBRERO", province: "CORRIENTES", info: "Creación del Municipio 2013." },
+            { day: 13, month: 6, city: "LAS ACEQUIAS", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Antonio de Padua)." },
+            { day: 13, month: 6, city: "SAN JUAN", province: "SAN JUAN", info: "Fundación 1562." },
+            { day: 13, month: 6, city: "AGUARA GRANDE", province: "SANTA FE", info: "Fundación 1929." },
+            { day: 13, month: 6, city: "SAN ANTONIO", province: "JUJUY", info: "Referencia a Fiesta Patronal (San Antonio de Padua)." },
+            { day: 13, month: 6, city: "YATAYTI CALLE", province: "CORRIENTES", info: "Referencia a Fiesta Patronal (San Antonio de Padua)." },
+            { day: 13, month: 6, city: "TAMBERIAS", province: "SAN JUAN", info: "Referencia a Fiesta Patronal (San Antonio de Padua)." },
+            { day: 13, month: 6, city: "TARTAGAL", province: "SALTA", info: "Fundación 1924." },
+            { day: 13, month: 6, city: "SAN ANTONIO", province: "ISLA APIPE GRANDE", info: "Referencia a Fiesta Patronal (San Antonio de Padua). Poblamiento antiguo (ca. 1821)." },
+            { day: 13, month: 6, city: "GUACHIPAS", province: "SALTA", info: "Referencia a Fiesta Patronal (San Antonio de Padua)." },
+            { day: 13, month: 6, city: "POZO HONDO", province: "SANTIAGO DEL ESTERO", info: "Fundación 1947." },
+            { day: 14, month: 6, city: "LUCIO V LOPEZ", province: "SANTA FE", info: "Fundación 1909." },
+            { day: 14, month: 6, city: "VILLA GIARDINO", province: "CÓRDOBA", info: "Fundación 1938." },
+            { day: 14, month: 6, city: "SAAVEDRA", province: "BUENOS AIRES", info: "Fundación 1888." },
+            { day: 17, month: 6, city: "TRES LAGUNAS", province: "FORMOSA", info: "Fundación 1942." },
+            { day: 18, month: 6, city: "MALABRIGO", province: "SANTA FE", info: "Fundación 1897." },
+            { day: 19, month: 6, city: "CATRIEL", province: "RÍO NEGRO", info: "Fundación 1899." },
+            { day: 19, month: 6, city: "MAURICIO MAYER", province: "LA PAMPA", info: "Fundación 1914." },
+            { day: 20, month: 6, city: "PUEBLO GENERAL BELGRANO", province: "ENTRE RÍOS", info: "Referencia a Día de la Bandera." },
+            { day: 20, month: 6, city: "VILLA BURRUYACU", province: "TUCUMÁN", info: "Fundación 1860." },
+            { day: 20, month: 6, city: "CURUPAYTI", province: "SANTA FE", info: "Fundación 1892." },
+            { day: 20, month: 6, city: "GOBERNADOR FEBRE", province: "ENTRE RÍOS", info: "Referencia a inauguración Estación de Tren 1907." },
+            { day: 20, month: 6, city: "ADOLFO GONZALES CHAVES", province: "BUENOS AIRES", info: "Fundación 1906." },
+            { day: 21, month: 6, city: "CONCEPCION", province: "CORRIENTES", info: "Fundación 1796." },
+            { day: 21, month: 6, city: "ESTEBAN RAMS", province: "SANTA FE", info: "Referencia a habilitación Estación de Tren (1892)." },
+            { day: 21, month: 6, city: "LAS LOMITAS", province: "FORMOSA", info: "Fundación 1914." },
+            { day: 21, month: 6, city: "CORONEL MOLDES", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 21, month: 6, city: "SARMIENTO", province: "CHUBUT", info: "Fundación 1897." },
+            { day: 22, month: 6, city: "GENERAL BELGRANO", province: "BUENOS AIRES", info: "Creación / Autonomía del Partido 1891." },
+            { day: 22, month: 6, city: "CHACHARRAMENDI", province: "LA PAMPA", info: "Fundación 1904." },
+            { day: 22, month: 6, city: "BALCARCE", province: "BUENOS AIRES", info: "Fundación 1876." },
+            { day: 22, month: 6, city: "VILLA LARCA", province: "SAN LUIS", info: "Fundación 1858." },
+            { day: 23, month: 6, city: "VERA", province: "SANTA FE", info: "Fundación 1892." },
+            { day: 24, month: 6, city: "ARRUFO", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 24, month: 6, city: "CACIQUE ARIACAIQUIN", province: "SANTA FE", info: "Referencia a Fiesta Patronal (San Juan Bautista)." },
+            { day: 24, month: 6, city: "SAN GUILLERMO", province: "SANTA FE", info: "Fundación 1894." },
+            { day: 24, month: 6, city: "LA PUERTA", province: "CATAMARCA", info: "Referencia a Fiesta Patronal (San Juan Bautista)." },
+            { day: 24, month: 6, city: "CAVOUR", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 24, month: 6, city: "CIERVO PETISO", province: "CHACO", info: "Fundación 1935." },
+            { day: 24, month: 6, city: "LOS TOLDOS", province: "SALTA", info: "Referencia a Fiesta Patronal (San Juan Bautista)." },
+            { day: 24, month: 6, city: "HUMBERTO PRIMO", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 25, month: 6, city: "CONCEPCION DEL URUGUAY", province: "ENTRE RÍOS", info: "Fundación 1783." },
+            { day: 25, month: 6, city: "PARANA", province: "ENTRE RÍOS", info: "Fecha de traslado de la Parroquia (1730), considerada fundacional." },
+            { day: 25, month: 6, city: "GENERAL BALDISSERA", province: "CÓRDOBA", info: "Fundación 1904." },
+            { day: 25, month: 6, city: "MERCEDES", province: "BUENOS AIRES", info: "Fundación (Guardia de Luján) 1752." },
+            { day: 25, month: 6, city: "PALERMO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 25, month: 6, city: "SAN JOSE DE JACHAL", province: "SAN JUAN", info: "Fundación 1751." },
+            { day: 26, month: 6, city: "PAMPAYASTA NORTE", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 27, month: 6, city: "COLONIA ABORIGEN", province: "CHACO", info: "Referencia a fundación de la Reducción Indígena Napalpí 1911." },
+            { day: 27, month: 6, city: "NAPALPI", province: "CHACO", info: "Fundación Reducción 1911 (ver Colonia Aborigen)." },
+            { day: 27, month: 6, city: "MACHAGAI", province: "CHACO", info: "Fundación 1921." },
+            { day: 28, month: 6, city: "SAN CRISTOBAL", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 29, month: 6, city: "EL ALTO", province: "CATAMARCA", info: "Referencia a Fiesta Patronal (San Pedro Apóstol)." },
+            { day: 29, month: 6, city: "INGENIO SAN PABLO", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (San Pedro y San Pablo)." },
+            { day: 29, month: 6, city: "SAN PEDRO DE GUASAYAN", province: "SANTIAGO DEL ESTERO", info: "Referencia a Fiesta Patronal (San Pedro)." },
+            { day: 29, month: 6, city: "SAN PEDRO NORTE", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Pedro Apóstol). Origen antiguo." },
+            { day: 29, month: 6, city: "POZO DE PIEDRA", province: "CATAMARCA", info: "Referencia a Fiesta Patronal (San Pedro y San Pablo)." },
+            { day: 29, month: 6, city: "SAN PEDRO", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Pedro)." },
+            { day: 29, month: 6, city: "MARCELINO ESCALADA", province: "SANTA FE", info: "Fundación 1889." },
+            { day: 30, month: 6, city: "BASAVILBASO", province: "ENTRE RÍOS", info: "Fundación 1887." },
+            { day: 30, month: 6, city: "GENERAL DEHEZA", province: "CÓRDOBA", info: "Fundación 1893." },
+            { day: 30, month: 6, city: "CORONEL CHARLONE", province: "BUENOS AIRES", info: "Fundación 1908." },
+
+            // Julio
+            { day: 1, month: 7, city: "CHAS", province: "BUENOS AIRES", info: "Inauguración estación de tren 1871." },
+            { day: 1, month: 7, city: "GORCHS", province: "BUENOS AIRES", info: "Inauguración estación de tren 1871." },
+            { day: 1, month: 7, city: "CACHARI", province: "BUENOS AIRES", info: "Referencia a inauguración estación 1883." },
+            { day: 1, month: 7, city: "CERES", province: "SANTA FE", info: "Fundación 1892." },
+            { day: 1, month: 7, city: "VILLA FONTANA", province: "ENTRE RÍOS", info: "Fundación 1906." },
+            { day: 1, month: 7, city: "MONTE MAIZ", province: "CÓRDOBA", info: "Fundación 1902." },
+            { day: 1, month: 7, city: "ADOLFO VAN PRAET", province: "LA PAMPA", info: "Fundación 1909." },
+            { day: 1, month: 7, city: "INGENIERO FORRES", province: "SANTIAGO DEL ESTERO", info: "Fundación 1926." },
+            { day: 1, month: 7, city: "CUATRO BOCAS", province: "SANTIAGO DEL ESTERO", info: "Fecha de habilitación de la estación de tren (1929)." },
+            { day: 2, month: 7, city: "HERSILIA", province: "SANTA FE", info: "Fundación 1888." },
+            { day: 2, month: 7, city: "GENERAL JOSE DE SAN MARTIN", province: "CHACO", info: "Fundación 1909." },
+            { day: 2, month: 7, city: "PUNTA ALTA", province: "BUENOS AIRES", info: "Fundación 1898." },
+            { day: 4, month: 7, city: "Villa Alfredo Fortabat (Loma Negra)", province: "Buenos Aires", info: "Referencia inauguración fábrica 1929?" },
+            { day: 5, month: 7, city: "Añatuya", province: "Santiago del Estero", info: "Fundación 1912" },
+            { day: 5, month: 7, city: "General Galarza", province: "Entre Ríos", info: "Fundación 1912" },
+            { day: 5, month: 7, city: "SAN FERNANDO DEL VALLE DE CATAMARCA", province: "CATAMARCA", info: "Fundación 1683." },
+            { day: 5, month: 7, city: "AÑATUYA", province: "SANTIAGO DEL ESTERO", info: "Fundación 1912." },
+            { day: 6, month: 7, city: "CAMPANA", province: "BUENOS AIRES", info: "Creación del Partido 1885." },
+            { day: 6, month: 7, city: "LAGUNA PAIVA", province: "SANTA FE", info: "Fundación 1913." },
+            { day: 7, month: 7, city: "VIALE", province: "ENTRE RÍOS", info: "Fundación 1907." },
+            { day: 8, month: 7, city: "COLONIA SANTA TERESA", province: "LA PAMPA", info: "Fundación 1921." },
+            { day: 9, month: 7, city: "Oberá", province: "Misiones", info: "Fundación 1928" },
+            { day: 9, month: 7, city: "TOAY", province: "LA PAMPA", info: "Fundación 1894." },
+            { day: 9, month: 7, city: "CERRILLOS", province: "SALTA", info: "Referencia a Fiesta Patronal (San José Obrero)." },
+            { day: 9, month: 7, city: "PAVON", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 9, month: 7, city: "VILLA DE MAYO", province: "BUENOS AIRES", info: "Referencia a Día de la Localidad." },
+            { day: 10, month: 7, city: "LOS AMORES", province: "SANTA FE", info: "Fundación 1910." },
+            { day: 11, month: 7, city: "Pico Truncado", province: "Santa Cruz", info: "Fundación 1921" },
+            { day: 11, month: 7, city: "Río Grande", province: "Tierra del Fuego", info: "Fundación 1921" },
+            { day: 11, month: 7, city: "LOS FRENTONES", province: "CHACO", info: "Fundación 1933." },
+            { day: 11, month: 7, city: "IBARRETA", province: "FORMOSA", info: "Fundación 1921." },
+            { day: 12, month: 7, city: "Zapala", province: "Neuquén", info: "Fundación 1913" },
+            { day: 12, month: 7, city: "PATERNAL", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 12, month: 7, city: "ANDALGALA", province: "CATAMARCA", info: "Fundación 1658." },
+            { day: 12, month: 7, city: "PRESIDENCIA DE LA PLAZA", province: "CHACO", info: "Fundación 1921." },
+            { day: 12, month: 7, city: "VILLA DE TRANCAS", province: "TUCUMÁN", info: "Fundación 1823." },
+            { day: 13, month: 7, city: "LA PAZ", province: "ENTRE RÍOS", info: "Fundación 1835." },
+            { day: 14, month: 7, city: "VILLA OLIVARI", province: "CORRIENTES", info: "Creación del Municipio 1983." },
+            { day: 14, month: 7, city: "SANTA ANITA", province: "ENTRE RÍOS", info: "Fundación 1900." },
+            { day: 14, month: 7, city: "GENERAL CAMPOS", province: "ENTRE RÍOS", info: "Fundación 1913." },
+            { day: 15, month: 7, city: "Godoy", province: "Santa Fe", info: "Fecha fundacional 1890" },
+            { day: 15, month: 7, city: "Puerto Deseado", province: "Santa Cruz", info: "Fundación 1884" },
+            { day: 15, month: 7, city: "MONJE", province: "SANTA FE", info: "Fundación 1887." },
+            { day: 15, month: 7, city: "GENERAL LEVALLE", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 15, month: 7, city: "PUERTO DESEADO", province: "SANTA CRUZ", info: "Fundación 1884." },
+            { day: 15, month: 7, city: "GENERAL MOSCONI", province: "SALTA", info: "Fundación del Centro Cívico 1946." },
+            { day: 16, month: 7, city: "Las Leñas", province: "Mendoza", info: "Inauguración centro esquí 1983" },
+            { day: 16, month: 7, city: "SIMOCA", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Nuestra Señora del Carmen). Origen antiguo." },
+            { day: 16, month: 7, city: "LA CONSULTA", province: "MENDOZA", info: "Referencia a Fiesta Patronal (Virgen del Carmen). Crecimiento orgánico." },
+            { day: 16, month: 7, city: "NOGOYA", province: "ENTRE RÍOS", info: "Referencia a Fiesta Patronal (Nuestra Señora del Carmen). Origen 1782." },
+            { day: 16, month: 7, city: "SASTRE", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 16, month: 7, city: "SENILLOSA", province: "NEUQUÉN", info: "Referencia a creación Comisión de Fomento 1951. Origen ligado al ferrocarril (ca. 1913)." },
+            { day: 16, month: 7, city: "EL CARMEN", province: "JUJUY", info: "Referencia a Fiesta Patronal (Nuestra Señora del Carmen)." },
+            { day: 16, month: 7, city: "SAN BENITO", province: "ENTRE RÍOS", info: "Referencia a Fiesta Patronal." },
+            { day: 16, month: 7, city: "VILLA DEL CARMEN", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (Nuestra Señora del Carmen)." },
+            { day: 16, month: 7, city: "VILLA CARLOS PAZ", province: "CÓRDOBA", info: "Fundación 1913." },
+            { day: 16, month: 7, city: "VILLA PADRE MONTI", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Nuestra Señora del Carmen)." },
+            { day: 16, month: 7, city: "LA GALLARETA", province: "SANTA FE", info: "Fundación 1904." },
+            { day: 17, month: 7, city: "ALVEAR", province: "SANTA FE", info: "Referencia a Fiesta Patronal (Virgen del Carmen). Origen ligado a loteos (ca. 1889)." },
+            { day: 17, month: 7, city: "LUIS PALACIOS", province: "SANTA FE", info: "Fundación 1889." },
+            { day: 17, month: 7, city: "PUERTO SAN JULIAN", province: "SANTA CRUZ", info: "Fundación 1901." },
+            { day: 18, month: 7, city: "FUENTES", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 19, month: 7, city: "VILLA GENERAL SAVIO", province: "BUENOS AIRES", info: "Fundación 1907 (Estación Sánchez)." },
+            { day: 19, month: 7, city: "OLIVOS", province: "BUENOS AIRES", info: "Referencia a Fiesta Patronal (San Pedro y San Pablo), fecha histórica." },
+            { day: 20, month: 7, city: "VILLA GENERAL GUEMES", province: "FORMOSA", info: "Fundación 1936." },
+            { day: 21, month: 7, city: "ALDEA SALTO", province: "ENTRE RÍOS", info: "Referencia a Fiesta Patronal." },
+            { day: 21, month: 7, city: "ALDEA VALLE MARIA", province: "ENTRE RÍOS", info: "Fundación 1878." },
+            { day: 21, month: 7, city: "ALDEA GRAPSCHENTAL", province: "ENTRE RÍOS", info: "Fundación 1886." },
+            { day: 22, month: 7, city: "MAGDALENA", province: "BUENOS AIRES", info: "Referencia a Fiesta Patronal (Santa María Magdalena)." },
+            { day: 24, month: 7, city: "RADA TILLY", province: "CHUBUT", info: "Fundación 1948." },
+            { day: 25, month: 7, city: "Santiago del Estero (Capital)", province: "Santiago del Estero", info: "Fundación 1553" },
+            { day: 25, month: 7, city: "TAFI DEL VALLE", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Santiago Apóstol). Origen prehispánico." },
+            { day: 25, month: 7, city: "ANTELO", province: "ENTRE RÍOS", info: "Fundación 1890." },
+            { day: 25, month: 7, city: "OBERA", province: "MISIONES", info: "Fundación 1928." },
+            { day: 25, month: 7, city: "SANTIAGO DEL ESTERO", province: "SANTIAGO DEL ESTERO", info: "Fundación 1553." },
+            { day: 25, month: 7, city: "BOEDO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 25, month: 7, city: "HERRERA", province: "SANTIAGO DEL ESTERO", info: "Referencia a Fiesta Patronal (Santiago Apóstol)." },
+            { day: 26, month: 7, city: "SANTA ANA", province: "ENTRE RÍOS", info: "Referencia a Fiesta Patronal (Santa Ana). Fundación 1887." },
+            { day: 26, month: 7, city: "LAS VERTIENTES", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Ana)." },
+            { day: 26, month: 7, city: "MARIA SUSANA", province: "SANTA FE", info: "Fundación 1911." },
+            { day: 26, month: 7, city: "SANTA ANA", province: "CORRIENTES", info: "Referencia a Fiesta Patronal (Santa Ana)." },
+            { day: 26, month: 7, city: "PRESIDENTE DERQUI", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1886)." },
+            { day: 26, month: 7, city: "MARTIN CORONADO", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 26, month: 7, city: "NARE", province: "SANTA FE", info: "Fundación 1913." },
+            { day: 26, month: 7, city: "VILLA PARQUE SANTA ANA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal." },
+            { day: 26, month: 7, city: "SUSANA", province: "SANTA FE", info: "Fundación 1881." },
+            { day: 27, month: 7, city: "CERRO COLORADO", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Ana)." },
+            { day: 28, month: 7, city: "28 de Julio", province: "Chubut", info: "Fundación 1935" },
+            { day: 28, month: 7, city: "EL ESPINILLO", province: "CHACO", info: "Creación del Municipio 1987." },
+            { day: 28, month: 7, city: "PUERTO MADRYN", province: "CHUBUT", info: "Referencia al desembarco de los colonos galeses (1865)." },
+            { day: 28, month: 7, city: "MONTEROS", province: "TUCUMÁN", info: "Declaración como Ciudad 1868." },
+            { day: 29, month: 7, city: "TRISTAN SUAREZ", province: "BUENOS AIRES", info: "Fundación 1885." },
+            { day: 30, month: 7, city: "VILLA MAIPU", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 31, month: 7, city: "SALADILLO", province: "BUENOS AIRES", info: "Fundación 1863." },
+            { day: 31, month: 7, city: "ESTACION TABOADA", province: "SANTIAGO DEL ESTERO", info: "Fundación 1890." },
+
+            // Agosto
+            { day: 1, month: 8, city: "INRIVILLE", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 1, month: 8, city: "LA EDUVIGIS", province: "CHACO", info: "Fundación 1936." },
+            { day: 1, month: 8, city: "VILLA REYNOLDS", province: "SAN LUIS", info: "Fundación 1875." },
+            { day: 1, month: 8, city: "LOMA HERMOSA", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 1, month: 8, city: "SAN MARTIN DE LAS ESCOBAS", province: "SANTA FE", info: "Fundación 1891." },
+            { day: 2, month: 8, city: "LA LEONESA", province: "CHACO", info: "Fundación 1901." },
+            { day: 2, month: 8, city: "9 DE JULIO", province: "CORRIENTES", info: "Creación del Municipio 1941." },
+            { day: 3, month: 8, city: "MONTECRISTO", province: "CÓRDOBA", info: "Inauguración estación 1888." },
+            { day: 3, month: 8, city: "QUEQUEN", province: "BUENOS AIRES", info: "Fundación 1854." },
+            { day: 3, month: 8, city: "LA PENCA Y CARAGUATA", province: "SANTA FE", info: "Creación de la Comuna 1948." },
+            { day: 4, month: 8, city: "TIGRE", province: "BUENOS AIRES", info: "Fundación 1806." },
+            { day: 4, month: 8, city: "SANTO DOMINGO", province: "SANTIAGO DEL ESTERO", info: "Referencia a Fiesta Patronal (Santo Domingo de Guzmán)." },
+            { day: 5, month: 8, city: "Rosario", province: "Santa Fe", info: "Declaración Villa 1823 (Fecha discutida)" },
+            { day: 5, month: 8, city: "CHACABUCO", province: "BUENOS AIRES", info: "Fundación 1865." },
+            { day: 5, month: 8, city: "SANTA CLARA DE BUENA VISTA", province: "SANTA FE", info: "Fundación 1883." },
+            { day: 5, month: 8, city: "MONIGOTES", province: "SANTA FE", info: "Fundación 1894." },
+            { day: 6, month: 8, city: "EL BORDO", province: "SALTA", info: "Referencia a Fiesta Patronal (San Salvador)." },
+            { day: 6, month: 8, city: "PUERTO TIROL", province: "CHACO", info: "Fundación 1888." },
+            { day: 6, month: 8, city: "NAZARENO", province: "SALTA", info: "Referencia a Fiesta Patronal (San Salvador y Virgen de Copacabana)." },
+            { day: 7, month: 8, city: "ALEJANDRO ROCA", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 7, month: 8, city: "SANTOS LUGARES", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 7, month: 8, city: "PIEDRAS BLANCAS", province: "ENTRE RÍOS", info: "Fundación 1891." },
+            { day: 8, month: 8, city: "MATTALDI", province: "CÓRDOBA", info: "Fundación 1908." },
+            { day: 8, month: 8, city: "COLONIA AVIGDOR", province: "ENTRE RÍOS", info: "Fundación 1936." },
+            { day: 8, month: 8, city: "VILLA DEL PARQUE", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 9, month: 8, city: "SANTIAGO TEMPLE", province: "CÓRDOBA", info: "Fundación 1888." },
+            { day: 9, month: 8, city: "BERNAL", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 10, month: 8, city: "BERNA", province: "SANTA FE", info: "Referencia a Fiesta Patronal (San Lorenzo). Fundación 1905." },
+            { day: 10, month: 8, city: "LOS AMORES", province: "SANTA FE", info: "Fundación 1910." },
+            { day: 10, month: 8, city: "PABLO PODESTA", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 10, month: 8, city: "SAN LORENZO", province: "CORRIENTES", info: "Referencia a Fiesta Patronal (San Lorenzo Mártir)." },
+            { day: 10, month: 8, city: "VILLA SAN LORENZO", province: "SALTA", info: "Referencia a Fiesta Patronal (San Lorenzo)." },
+            { day: 11, month: 8, city: "CIUDAD JARDIN LOMAS DEL PALOMAR", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 12, month: 8, city: "GENERAL ACHA", province: "LA PAMPA", info: "Fundación 1882." },
+            { day: 12, month: 8, city: "VELEZ SARSFIELD", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 12, month: 8, city: "GENERAL ALVEAR", province: "MENDOZA", info: "Fundación 1914." },
+            { day: 12, month: 8, city: "ITUZAINGO", province: "CORRIENTES", info: "Fundación 1864." },
+            { day: 13, month: 8, city: "SAN CARLOS NORTE", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 14, month: 8, city: "DOMSELAAR", province: "BUENOS AIRES", info: "Referencia a inauguración estación 1865." },
+            { day: 14, month: 8, city: "ALEJANDRO KORN", province: "BUENOS AIRES", info: "Referencia a inauguración estación 1865." },
+            { day: 14, month: 8, city: "QUILMES", province: "BUENOS AIRES", info: "Fundación 1666." },
+            { day: 14, month: 8, city: "GAIMAN", province: "CHUBUT", info: "Fundación 1874." },
+            { day: 15, month: 8, city: "Laborde", province: "Córdoba", info: "Fecha fundacional 1904" },
+            { day: 15, month: 8, city: "AMBOY", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Asunción). Origen muy antiguo." },
+            { day: 15, month: 8, city: "TUMBAYA", province: "JUJUY", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Asunción). Origen antiguo." },
+            { day: 15, month: 8, city: "EL TREBOL", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 15, month: 8, city: "BANFIELD", province: "BUENOS AIRES", info: "Inauguración estación de tren 1873." },
+            { day: 15, month: 8, city: "COLONIA BARGE", province: "CÓRDOBA", info: "Referencia a habilitación estación de tren 1902." },
+            { day: 15, month: 8, city: "MARIANO ACOSTA", province: "BUENOS AIRES", info: "Inauguración Estación 1910." },
+            { day: 15, month: 8, city: "LAS BAJADAS", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Asunción)." },
+            { day: 15, month: 8, city: "LOMAS DE VALLEJOS", province: "CORRIENTES", info: "Creación Municipio 1996." },
+            { day: 15, month: 8, city: "JUNCAL", province: "SANTA FE", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Asunción)." },
+            { day: 15, month: 8, city: "SANSINENA", province: "BUENOS AIRES", info: "Fundación 1909." },
+            { day: 15, month: 8, city: "GODEKEN", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 15, month: 8, city: "LUCAS NORTE", province: "ENTRE RÍOS", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Asunción)." },
+            { day: 15, month: 8, city: "VILLA DEL TRANSITO", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Nuestra Señora del Tránsito)." },
+            { day: 15, month: 8, city: "OJO DE AGUA", province: "SANTIAGO DEL ESTERO", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Asunción)." },
+            { day: 15, month: 8, city: "LOS NOGALES", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Asunción)." },
+            { day: 15, month: 8, city: "GENERAL CABRERA", province: "CÓRDOBA", info: "Fundación 1911." },
+            { day: 15, month: 8, city: "ARMINDA", province: "SANTA FE", info: "Fundación 1891." },
+            { day: 15, month: 8, city: "PEDERNERA", province: "SAN LUIS", info: "Referencia a inauguración Estación Pedernera 1882." },
+            { day: 15, month: 8, city: "ELORTONDO", province: "SANTA FE", info: "Fundación 1889." },
+            { day: 15, month: 8, city: "ALIJILAN", province: "CATAMARCA", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Asunción)." },
+            { day: 15, month: 8, city: "COLONIA BELGRANO", province: "SANTA FE", info: "Fundación 1888." },
+            { day: 15, month: 8, city: "SANTURCE", province: "SANTA FE", info: "Fundación 1892." },
+            { day: 15, month: 8, city: "MISION NUEVA POMPEYA", province: "CHACO", info: "Referencia a Fundación Misión Franciscana (1900)." },
+            { day: 15, month: 8, city: "CHAZON", province: "CÓRDOBA", info: "Fundación 1906." },
+            { day: 15, month: 8, city: "ARROYO AGUIAR", province: "SANTA FE", info: "Fundación 1891." },
+            { day: 15, month: 8, city: "LAPACHITO", province: "CHACO", info: "Referencia a habilitación Estación de Tren 1921." },
+            { day: 15, month: 8, city: "ALCARAZ", province: "ENTRE RÍOS", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Asunción)." },
+            { day: 16, month: 8, city: "PERUGORRIA", province: "CORRIENTES", info: "Referencia a Fiesta Patronal (San Roque)." },
+            { day: 16, month: 8, city: "VERSALLES", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 16, month: 8, city: "AGUARAY", province: "SALTA", info: "Fundación 1911." },
+            { day: 16, month: 8, city: "GUERNICA", province: "BUENOS AIRES", info: "Referencia a inicio de loteos 1934." },
+            { day: 16, month: 8, city: "SAN MARIANO", province: "SANTA FE", info: "Fundación 1887." },
+            { day: 16, month: 8, city: "BANDERA", province: "SANTIAGO DEL ESTERO", info: "Fundación 1890." },
+            { day: 17, month: 8, city: "LILO VIEJO - PATAY", province: "SANTIAGO DEL ESTERO", info: "Referencia histórica." },
+            { day: 17, month: 8, city: "IBARLUCEA", province: "SANTA FE", info: "Fundación 1891." },
+            { day: 17, month: 8, city: "PLAYA UNION", province: "CHUBUT", info: "Referencia a llegada del primer tren (1923)." },
+            { day: 18, month: 8, city: "PAVON ARRIBA", province: "SANTA FE", info: "Fundación 1889." },
+            { day: 18, month: 8, city: "SAN MIGUEL DEL MONTE", province: "BUENOS AIRES", info: "Fecha tradicional de fundación (1864, creación del partido). Origen como guardia/fortín anterior." },
+            { day: 18, month: 8, city: "BALNEARIA", province: "CÓRDOBA", info: "Fundación 1911." },
+            { day: 19, month: 8, city: "COLONIA PANDO", province: "CORRIENTES", info: "Creación del Municipio 1983." },
+            { day: 19, month: 8, city: "CORONEL DU GRATY", province: "CHACO", info: "Fundación 1928." },
+            { day: 19, month: 8, city: "GOBERNADOR JUAN E. MARTINEZ", province: "CORRIENTES", info: "Fundación 1911." },
+            { day: 19, month: 8, city: "EZPELETA", province: "BUENOS AIRES", info: "Referencia a habilitación estación 1872." },
+            { day: 20, month: 8, city: "PROFESOR SALVADOR MAZZA", province: "SALTA", info: "Creación del Municipio 1951." },
+            { day: 20, month: 8, city: "VILLA PUEYRREDON", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 20, month: 8, city: "SALDAN", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Roque). Origen antiguo." },
+            { day: 20, month: 8, city: "LUGONES", province: "SANTIAGO DEL ESTERO", info: "Fundación 1910." },
+            { day: 21, month: 8, city: "FUNES", province: "SANTA FE", info: "Referencia a inauguración estación de tren (1875)." },
+            { day: 21, month: 8, city: "AMBROSETTI", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 21, month: 8, city: "Abdón Castro Tolay (Barrancas)", province: "Jujuy", info: "Fundación 1893" },
+            { day: 22, month: 8, city: "TOTORAS", province: "SANTA FE", info: "Fundación 1875." },
+            { day: 22, month: 8, city: "RIO MAYO", province: "CHUBUT", info: "Fundación 1935." },
+            { day: 23, month: 8, city: "HERMOSO CAMPO", province: "CHACO", info: "Fundación 1936." },
+            { day: 23, month: 8, city: "MONTE CHINGOLO", province: "BUENOS AIRES", info: "Fundación 1815." },
+            { day: 23, month: 8, city: "CALINGASTA", province: "SAN JUAN", info: "Fundación 1777." },
+            { day: 23, month: 8, city: "LOS CATUTOS", province: "NEUQUÉN", info: "Creación Comisión de Fomento 1989." },
+            { day: 24, month: 8, city: "COLONIA SAN BARTOLOME", province: "CÓRDOBA", info: "Fundación 1893." },
+            { day: 24, month: 8, city: "CUSI CUSI", province: "JUJUY", info: "Referencia a Fiesta Patronal (San Bartolomé)." },
+            { day: 24, month: 8, city: "CONSCRIPTO BERNARDI", province: "ENTRE RÍOS", info: "Fundación 1912." },
+            { day: 24, month: 8, city: "COMANDANTE LUIS PIEDRABUENA", province: "SANTA CRUZ", info: "Fundación oficial 1933 (renombrada). Origen en 1859." },
+            { day: 25, month: 8, city: "ARROYO ALGODON", province: "CÓRDOBA", info: "Fundación 1897." },
+            { day: 25, month: 8, city: "PRESIDENTE ROCA", province: "SANTA FE", info: "Fundación 1883." },
+            { day: 25, month: 8, city: "UNION", province: "SAN LUIS", info: "Fundación 1904." },
+            { day: 25, month: 8, city: "San Luis (Capital)", province: "San Luis", info: "Fundación 1594" },
+            { day: 25, month: 8, city: "SAN LUIS", province: "SAN LUIS", info: "Fundación 1594." },
+            { day: 25, month: 8, city: "SAN LUIS", province: "SALTA", info: "Referencia a Fiesta Patronal (San Luis Rey de Francia)." },
+            { day: 26, month: 8, city: "VILLA BALLESTER", province: "BUENOS AIRES", info: "Fundación 1889." },
+            { day: 26, month: 8, city: "COLONIA VICENTE AGUERO", province: "CÓRDOBA", info: "Fundación 1910." },
+            { day: 26, month: 8, city: "LA ADELA", province: "LA PAMPA", info: "Fundación 1909." },
+            { day: 27, month: 8, city: "JOSE INGENIEROS", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 28, month: 8, city: "RAMONA", province: "SANTA FE", info: "Fundación 1893." },
+            { day: 28, month: 8, city: "MONTEROS", province: "TUCUMÁN", info: "Declaración como Ciudad 1868." },
+            { day: 28, month: 8, city: "CERRITO", province: "ENTRE RÍOS", info: "Fundación 1887." },
+            { day: 28, month: 8, city: "SAN AGUSTIN", province: "SALTA", info: "Referencia a Fiesta Patronal (San Agustín)." },
+            { day: 28, month: 8, city: "ACONQUIJA", province: "CATAMARCA", info: "Referencia a Fiesta Patronal (San Agustín)." },
+            { day: 28, month: 8, city: "CHACARITA", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 28, month: 8, city: "SAN AGUSTIN", province: "SANTA FE", info: "Fundación 1871." },
+            { day: 28, month: 8, city: "SELVA", province: "SANTIAGO DEL ESTERO", info: "Fundación 1890." },
+            { day: 29, month: 8, city: "FLORESTA", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 30, month: 8, city: "TANINGA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima). Localidad cercana a Salsacate." },
+            { day: 30, month: 8, city: "SANTA ROSA DE CALAMUCHITA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima). Origen antiguo." },
+            { day: 30, month: 8, city: "LA CUMBRE", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima). Origen ligado al ferrocarril (ca. 1892)." },
+            { day: 30, month: 8, city: "LA CAUTIVA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima)." },
+            { day: 30, month: 8, city: "LOS CHAÑARITOS (RÍO SEGUNDO)", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima)." },
+            { day: 30, month: 8, city: "MONTES DE OCA", province: "SANTA FE", info: "Fundación 1889." },
+            { day: 30, month: 8, city: "TURDERA", province: "BUENOS AIRES", info: "Inauguración estación de tren 1888." },
+            { day: 30, month: 8, city: "LOS CISNES", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima)." },
+            { day: 30, month: 8, city: "VILLA DE LAS ROSAS", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima)." },
+            { day: 30, month: 8, city: "RECREO", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 30, month: 8, city: "SANTA ROSA DEL CONLARA", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima)." },
+            { day: 30, month: 8, city: "SANTA ROSA DE RIO PRIMERO", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima). Origen antiguo." },
+            { day: 30, month: 8, city: "LAS CATITAS", province: "MENDOZA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima)." },
+            { day: 30, month: 8, city: "30 DE AGOSTO", province: "BUENOS AIRES", info: "Fundación 1910." },
+            { day: 30, month: 8, city: "COSTA DE ARAUJO", province: "MENDOZA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima)." },
+            { day: 30, month: 8, city: "RAMAYON", province: "SANTA FE", info: "Fundación 1911." },
+            { day: 30, month: 8, city: "SANTA ROSA", province: "CORRIENTES", info: "Referencia a Fiesta Patronal." },
+            { day: 30, month: 8, city: "TACO POZO", province: "CHACO", info: "Fundación 1913." },
+            { day: 30, month: 8, city: "LAS PETACAS", province: "SANTA FE", info: "Fundación 1894." },
+            { day: 30, month: 8, city: "PURMAMARCA", province: "JUJUY", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima). Origen prehispánico." },
+            { day: 30, month: 8, city: "SAN JOSE DEL RINCON", province: "SANTA FE", info: "Referencia a Fiesta Patronal." },
+            { day: 30, month: 8, city: "LAFINUR", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima)." },
+            { day: 30, month: 8, city: "PAMPAYASTA NORTE", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima)." },
+            { day: 30, month: 8, city: "VILLA ROSA", province: "BUENOS AIRES", info: "Referencia a Fiesta Patronal (Santa Rosa de Lima). Origen ligado a estación (1911)." },
+            { day: 31, month: 8, city: "San Ramón de la Nueva Orán", province: "Salta", info: "Fundación 1794" },
+            { day: 31, month: 8, city: "SAN RAMON DE LA NUEVA ORAN", province: "SALTA", info: "Fundación 1794." },
+            { day: 31, month: 8, city: "SAN RAMON", province: "SANTIAGO DEL ESTERO", info: "Referencia a Fiesta Patronal (San Ramón Nonato)." },
+            { day: 31, month: 8, city: "MERLO", province: "BUENOS AIRES", info: "Fundación 1755." },
+
+            // Septiembre
+            { day: 1, month: 9, city: "General Roca", province: "Río Negro", info: "Fundación 1879" },
+            { day: 1, month: 9, city: "ONCATIVO", province: "CÓRDOBA", info: "Fundación 1869." },
+            { day: 3, month: 9, city: "LA ESPERANZA", province: "JUJUY", info: "Referencia a fundación del Ingenio La Esperanza 1883." },
+            { day: 5, month: 9, city: "CHOLILA", province: "CHUBUT", info: "Creación Comisión de Fomento 1944." },
+            { day: 5, month: 9, city: "EL HOYO", province: "CHUBUT", info: "Creación del Municipio 1955." },
+            { day: 6, month: 9, city: "SUARDI", province: "SANTA FE", info: "Fundación 1908." },
+            { day: 6, month: 9, city: "Termas de Río Hondo", province: "Santiago del Estero", info: "Declaración Ciudad 1954" },
+            { day: 7, month: 9, city: "ALVAREZ", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 8, month: 9, city: "PROVIDENCIA", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 8, month: 9, city: "ESPERANZA", province: "SANTA FE", info: "Fundación 1856." },
+            { day: 8, month: 9, city: "EL JARDIN", province: "SALTA", info: "Referencia a Fiesta Patronal (Inmaculada Concepción)." },
+            { day: 8, month: 9, city: "PANAHOLMA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Nuestra Señora del Tránsito)." },
+            { day: 9, month: 9, city: "CAÑADA ROSQUIN", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 9, month: 9, city: "NOETINGER", province: "CÓRDOBA", info: "Fundación 1911." },
+            { day: 9, month: 9, city: "SAN FRANCISCO", province: "CÓRDOBA", info: "Fundación 1886." },
+            { day: 9, month: 9, city: "OLIVA", province: "CÓRDOBA", info: "Fundación 1888." },
+            { day: 9, month: 9, city: "TORTUGUITAS", province: "BUENOS AIRES", info: "Referencia a inauguración estación (1925)." },
+            { day: 9, month: 9, city: "VILLA CASTELLI", province: "LA RIOJA", info: "Fundación 1891." },
+            { day: 10, month: 9, city: "Puerto Iguazú", province: "Misiones", info: "Fundación 1901" },
+            { day: 10, month: 9, city: "LOMAS DE ZAMORA", province: "BUENOS AIRES", info: "Creación del Partido 1861." },
+            { day: 10, month: 9, city: "ISLA VERDE", province: "CÓRDOBA", info: "Fundación 1909." },
+            { day: 10, month: 9, city: "COLONIA PROSPERIDAD", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Nicolás)." },
+            { day: 11, month: 9, city: "LANTERI", province: "SANTA FE", info: "Fundación 1911." },
+            { day: 11, month: 9, city: "INGENIERO CHANOURDIE", province: "SANTA FE", info: "Fundación 1922." },
+            { day: 11, month: 9, city: "TRES CAPONES", province: "MISIONES", info: "Fundación 1939." },
+            { day: 11, month: 9, city: "GENERAL PICO", province: "LA PAMPA", info: "Fundación 1905." },
+            { day: 12, month: 9, city: "Neuquén (Capital)", province: "Neuquén", info: "Fundación 1904" },
+            { day: 12, month: 9, city: "NEUQUEN", province: "NEUQUÉN", info: "Fundación 1904." },
+            { day: 12, month: 9, city: "BOWEN", province: "MENDOZA", info: "Fundación 1912." },
+            { day: 12, month: 9, city: "PASO DE LOS LIBRES", province: "CORRIENTES", info: "Fundación 1843." },
+            { day: 12, month: 9, city: "CASTELLI", province: "BUENOS AIRES", info: "Fundación 1865." },
+            { day: 13, month: 9, city: "VILLA BERTHET", province: "CHACO", info: "Fundación 1931." },
+            { day: 13, month: 9, city: "VILLA LA BOLSA", province: "CÓRDOBA", info: "Fundación 1947." },
+            { day: 14, month: 9, city: "INGENIERO JACOBACCI", province: "RÍO NEGRO", info: "Fundación 1916." },
+            { day: 15, month: 9, city: "Villa Krause (Rawson)", province: "San Juan", info: "Fundación 1884" },
+            { day: 15, month: 9, city: "GARUHAPE", province: "MISIONES", info: "Fundación 1946." },
+            { day: 15, month: 9, city: "ARROYO CABRAL", province: "CÓRDOBA", info: "Fundación 1886." },
+            { day: 15, month: 9, city: "VILLA FIORITO", province: "BUENOS AIRES", info: "Inauguración estación de tren 1887." },
+            { day: 15, month: 9, city: "PIÑERO", province: "SANTA FE", info: "Fundación 1889." },
+            { day: 15, month: 9, city: "GANDARA", province: "BUENOS AIRES", info: "Referencia a inauguración estación 1865." },
+            { day: 15, month: 9, city: "RAWSON", province: "CHUBUT", info: "Fundación 1865." },
+            { day: 16, month: 9, city: "La Banda", province: "Santiago del Estero", info: "Declaración Ciudad 1912" },
+            { day: 16, month: 9, city: "CAMPO GALLO", province: "SANTIAGO DEL ESTERO", info: "Fundación 1932." },
+            { day: 16, month: 9, city: "CINCO SALTOS", province: "RÍO NEGRO", info: "Referencia a loteo inicial 1914." },
+            { day: 17, month: 9, city: "Correa", province: "Santa Fe", info: "Fecha fundacional 1875" },
+            { day: 17, month: 9, city: "PUERTO SAN JULIAN", province: "SANTA CRUZ", info: "Fundación 1901." },
+            { day: 19, month: 9, city: "PUJATO", province: "SANTA FE", info: "Fundación 1884." },
+            { day: 19, month: 9, city: "SAN GENARO", province: "SANTA FE", info: "Referencia a Fiesta Patronal (San Genaro). Fundación 1873." },
+            { day: 19, month: 9, city: "SAN GENARO NORTE", province: "SANTA FE", info: "Unificada con San Genaro." },
+            { day: 20, month: 9, city: "COLONIAS UNIDAS", province: "CHACO", info: "Fundación 1929." },
+            { day: 20, month: 9, city: "MIRAMAR", province: "BUENOS AIRES", info: "Fundación 1888." },
+            { day: 20, month: 9, city: "ADELIA MARIA", province: "CÓRDOBA", info: "Fundación 1929." },
+            { day: 20, month: 9, city: "ATALIVA ROCA", province: "LA PAMPA", info: "Fundación 1903." },
+            { day: 20, month: 9, city: "FONTANA", province: "CHACO", info: "Fundación 1917." },
+            { day: 21, month: 9, city: "ESTANISLAO DEL CAMPO", province: "FORMOSA", info: "Fundación 1914." },
+            { day: 21, month: 9, city: "COLEGIALES", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 21, month: 9, city: "CONCEPCION", province: "CORRIENTES", info: "Fundación 1796." },
+            { day: 22, month: 9, city: "VILLA GENERAL MITRE", province: "SANTIAGO DEL ESTERO", info: "Referencia a inauguración estación de tren (Pinto) 1890." },
+            { day: 22, month: 9, city: "VILLA DEL ROSARIO", province: "ENTRE RÍOS", info: "Fundación 1886." },
+            { day: 22, month: 9, city: "CRUZ DEL EJE", province: "CÓRDOBA", info: "Fundación 1735." },
+            { day: 23, month: 9, city: "BELGRANO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 23, month: 9, city: "URDINARRAIN", province: "ENTRE RÍOS", info: "Fundación 1890." },
+            { day: 23, month: 9, city: "BONPLAND", province: "CORRIENTES", info: "Referencia a habilitación estación de tren (1904)." },
+            { day: 24, month: 9, city: "LA MERCED", province: "SALTA", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Merced). Fundación 1902." },
+            { day: 24, month: 9, city: "BIALET MASSE", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Merced)." },
+            { day: 24, month: 9, city: "CARRERAS", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 24, month: 9, city: "GENERAL FOTHERINGHAM", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Merced)." },
+            { day: 24, month: 9, city: "MONTERRICO", province: "JUJUY", info: "Referencia a Fiesta Patronal (Virgen de la Merced)." },
+            { day: 24, month: 9, city: "VILLA ATAMISQUI", province: "SANTIAGO DEL ESTERO", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Merced)." },
+            { day: 24, month: 9, city: "BELLA VISTA", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Merced)." },
+            { day: 24, month: 9, city: "PIEDRABUENA", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Merced)." },
+            { day: 24, month: 9, city: "AGUAS BLANCAS", province: "SALTA", info: "Referencia a Fiesta Patronal (Nuestra Señora de la Merced)." },
+            { day: 24, month: 9, city: "CORONEL PRINGLES", province: "BUENOS AIRES", info: "Fundación 1882." },
+            { day: 25, month: 9, city: "ALTA ITALIA", province: "LA PAMPA", info: "Fundación 1910." },
+            { day: 25, month: 9, city: "VIRGINIA", province: "SANTA FE", info: "Fundación 1884." },
+            { day: 25, month: 9, city: "AGRONOMIA", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 25, month: 9, city: "SEEBER", province: "CÓRDOBA", info: "Fundación 1905." },
+            { day: 25, month: 9, city: "RIO PRIMERO", province: "CÓRDOBA", info: "Fundación 1888." },
+            { day: 26, month: 9, city: "MARIANO H.  ALFONZO", province: "BUENOS AIRES", info: "Fundación 1911." },
+            { day: 26, month: 9, city: "PLOTTIER", province: "NEUQUÉN", info: "Fundación 1935." },
+            { day: 27, month: 9, city: "San Miguel de Tucumán", province: "Tucumán", info: "Traslado a ubicación actual 1685" },
+            { day: 27, month: 9, city: "CHAMICAL", province: "LA RIOJA", info: "Referencia a Fiesta Patronal (Virgen del Rosario)." },
+            { day: 27, month: 9, city: "SAN CARLOS CENTRO", province: "SANTA FE", info: "Fundación 1858." },
+            { day: 27, month: 9, city: "VILLA SANTA RITA", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 27, month: 9, city: "SAN VICENTE", province: "MISIONES", info: "Fundación 1961." },
+            { day: 28, month: 9, city: "ALMAGRO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 28, month: 9, city: "JESUS MARIA", province: "CÓRDOBA", info: "Fundación 1873." },
+            { day: 28, month: 9, city: "POZO DEL TIGRE", province: "FORMOSA", info: "Fundación 1905." },
+            { day: 29, month: 9, city: "Eldorado", province: "Misiones", info: "Fundación 1919" },
+            { day: 29, month: 9, city: "San Miguel de Tucumán", province: "Tucumán", info: "Traslado a ubicación actual 1685" },
+            { day: 29, month: 9, city: "LA PUERTA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Miguel Arcángel). Origen antiguo." },
+            { day: 29, month: 9, city: "LOZADA", province: "CÓRDOBA", info: "Fundación 1909." },
+            { day: 29, month: 9, city: "TRES ISLETAS", province: "CHACO", info: "Fundación 1937." },
+            { day: 29, month: 9, city: "CASILDA", province: "SANTA FE", info: "Fundación 1870." },
+            { day: 29, month: 9, city: "VILLA RIO HONDO", province: "SANTIAGO DEL ESTERO", info: "Referencia a Fiesta Patronal (San Miguel Arcángel)." },
+            { day: 29, month: 9, city: "GUTEMBERG", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Miguel Arcángel)." },
+            { day: 29, month: 9, city: "LOS CEDROS", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Miguel Arcángel)." },
+            { day: 29, month: 9, city: "VILLA CURA BROCHERO", province: "CÓRDOBA", info: "Referencia a fundación de Villa del Tránsito 1864." },
+            { day: 29, month: 9, city: "GOBERNADOR VIRASORO", province: "CORRIENTES", info: "Fundación 1926." },
+            { day: 29, month: 9, city: "GERMANIA", province: "BUENOS AIRES", info: "Referencia a loteo inicial (1904)." },
+            { day: 29, month: 9, city: "EGUSQUIZA", province: "SANTA FE", info: "Fundación 1884." },
+            { day: 30, month: 9, city: "SAN JERONIMO DEL SAUCE", province: "SANTA FE", info: "Referencia a Fiesta Patronal (San Jerónimo). Fundación 1871." },
+            { day: 30, month: 9, city: "PARQUE CHAS", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+
+            // Octubre
+            { day: 1, month: 10, city: "HENDERSON", province: "BUENOS AIRES", info: "Fundación 1913." },
+            { day: 1, month: 10, city: "DIAZ", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 1, month: 10, city: "ACEVEDO", province: "BUENOS AIRES", info: "Referencia a inauguración estación 1882." },
+            { day: 2, month: 10, city: "POZO AZUL", province: "MISIONES", info: "Creación del Municipio 2017." },
+            { day: 2, month: 10, city: "VILLA URQUIZA", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 3, month: 10, city: "Cipolletti", province: "Río Negro", info: "Fundación 1903." },
+            { day: 3, month: 10, city: "PEDRO GOMEZ CELLO", province: "SANTA FE", info: "Fundación 1928." },
+            { day: 3, month: 10, city: "CIPOLLETTI", province: "RÍO NEGRO", info: "Fundación 1903." },
+            { day: 3, month: 10, city: "CERVANTES", province: "RÍO NEGRO", info: "Fundación 1910." },
+            { day: 4, month: 10, city: "SAN FRANCISCO DEL MONTE DE ORO", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (San Francisco de Asís)." },
+            { day: 4, month: 10, city: "CRISPI", province: "SANTA FE", info: "Referencia a Fiesta Patronal (San Francisco de Asís)." },
+            { day: 4, month: 10, city: "LAS OVEJAS", province: "NEUQUÉN", info: "Fundación 1933." },
+            { day: 4, month: 10, city: "TACURAL", province: "SANTA FE", info: "Referencia a Fiesta Patronal (San Francisco de Asís)." },
+            { day: 4, month: 10, city: "PAYOGASTA", province: "SALTA", info: "Referencia a Fiesta Patronal (San Francisco de Asís)." },
+            { day: 4, month: 10, city: "ATALIVA", province: "SANTA FE", info: "Fundación 1884." },
+            { day: 4, month: 10, city: "TREVELIN", province: "CHUBUT", info: "Fecha adoptada como aniversario, ligada a la historia del Molino Harinero (1888)." },
+            { day: 5, month: 10, city: "LAVALLE", province: "CORRIENTES", info: "Fundación 1863." },
+            { day: 5, month: 10, city: "MONTE CASEROS", province: "CORRIENTES", info: "Fundación 1829." },
+            { day: 6, month: 10, city: "ALMAGRO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 7, month: 10, city: "Villa Regina", province: "Río Negro", info: "Fundación 1924" },
+            { day: 7, month: 10, city: "CAFAYATE", province: "SALTA", info: "Referencia a Fiesta Patronal (Virgen del Rosario). Fundación formal 1840." },
+            { day: 7, month: 10, city: "SALSIPUEDES", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Virgen del Rosario). Origen antiguo." },
+            { day: 7, month: 10, city: "VILLA NUEVA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Virgen del Rosario). Fundación 1826." },
+            { day: 7, month: 10, city: "VILLA TULUMAYA", province: "MENDOZA", info: "Referencia a Fiesta Patronal (Virgen del Rosario). Origen como Villa de La Asunción de Lavalle 1859." },
+            { day: 7, month: 10, city: "VILLA SALAVINA", province: "SANTIAGO DEL ESTERO", info: "Referencia a Fiesta Patronal (Virgen del Rosario)." },
+            { day: 7, month: 10, city: "LAS HIGUERAS", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Virgen del Rosario)." },
+            { day: 7, month: 10, city: "RODEITO", province: "JUJUY", info: "Referencia a Fiesta Patronal (Nuestra Señora del Rosario)." },
+            { day: 7, month: 10, city: "COLONIA MEROU", province: "ENTRE RÍOS", info: "Referencia a Fiesta Patronal (Nuestra Señora del Rosario)." },
+            { day: 7, month: 10, city: "VILLA ASCASUBI", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Virgen del Rosario). Fundación 1888." },
+            { day: 7, month: 10, city: "VILLA DE SOTO", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Nuestra Señora del Rosario)." },
+            { day: 7, month: 10, city: "LA COCHA", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Nuestra Señora del Rosario)." },
+            { day: 7, month: 10, city: "IRUYA", province: "SALTA", info: "Referencia a Fiesta Patronal (Virgen del Rosario)." },
+            { day: 7, month: 10, city: "NUEVA TRINIDAD", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Nuestra Señora del Rosario)." },
+            { day: 7, month: 10, city: "SINSACATE", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Virgen del Rosario). Origen como posta jesuítica." },
+            { day: 7, month: 10, city: "PAMPA BLANCA", province: "JUJUY", info: "Referencia a Fiesta Patronal (Virgen del Rosario)." },
+            { day: 7, month: 10, city: "ROSARIO", province: "SANTA FE", info: "Referencia a Fiesta Patronal (Virgen del Rosario). Origen 1730." },
+            { day: 7, month: 10, city: "EL TUNAL", province: "SALTA", info: "Referencia a Fiesta Patronal (Nuestra Señora del Rosario)." },
+            { day: 7, month: 10, city: "VILLA TULUMBA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Nuestra Señora del Rosario). Origen 1585." },
+            { day: 7, month: 10, city: "LAS HERAS", province: "SANTA CRUZ", info: "Fundación oficial 1914, ligada al ferrocarril." },
+            { day: 7, month: 10, city: "TILCARA", province: "JUJUY", info: "Referencia a Fiesta Patronal (Virgen del Rosario). Origen prehispánico." },
+            { day: 7, month: 10, city: "QUILINO", province: "CÓRDOBA", info: "Fundación 1875" },
+            { day: 7, month: 10, city: "VILLA QUILINO", province: "CÓRDOBA", info: "Se considera fecha de Quilino (1875)" },
+            { day: 7, month: 10, city: "ALTA GRACIA", province: "CÓRDOBA", info: "Fundación 1643." },
+            { day: 7, month: 10, city: "ALEJANDRO ROCA", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 8, month: 10, city: "Posadas (Refundación)", province: "Misiones", info: "Refundación 1870" },
+            { day: 8, month: 10, city: "CASBAS", province: "BUENOS AIRES", info: "Fundación 1911." },
+            { day: 8, month: 10, city: "LA CUMBRECITA", province: "CÓRDOBA", info: "Fundación 1934." },
+            { day: 8, month: 10, city: "EL TALA", province: "SALTA", info: "Fundación 1890." },
+            { day: 8, month: 10, city: "LABOULAYE", province: "CÓRDOBA", info: "Fundación 1886." },
+            { day: 9, month: 10, city: "Tolhuin", province: "Tierra del Fuego", info: "Fundación 1972" },
+            { day: 10, month: 10, city: "CAMARONES", province: "CHUBUT", info: "Fundación 1900." },
+            { day: 10, month: 10, city: "GENERAL PAZ", province: "CÓRDOBA", info: "Referencia a inauguración estación de tren (1888)." },
+            { day: 10, month: 10, city: "ISLA VERDE", province: "CÓRDOBA", info: "Fundación 1909." },
+            { day: 11, month: 10, city: "DESPEÑADEROS", province: "CÓRDOBA", info: "Referencia a habilitación Estación de Tren 1883." },
+            { day: 11, month: 10, city: "MINA CLAVERO", province: "CÓRDOBA", info: "Fundación 1887." },
+            { day: 11, month: 10, city: "SAN ROQUE", province: "CORRIENTES", info: "Fundación 1773." },
+            { day: 11, month: 10, city: "CENTENARIO", province: "NEUQUÉN", info: "Fundación 1922." },
+            { day: 11, month: 10, city: "VILLA GENERAL BELGRANO", province: "CÓRDOBA", info: "Fundación 1932." },
+            { day: 12, month: 10, city: "Colón", province: "Buenos Aires", info: "Fundación 1892" },
+            { day: 12, month: 10, city: "Ushuaia", province: "Tierra del Fuego", info: "Fundación 1884" },
+            { day: 12, month: 10, city: "El Chalten", province: "Santa Cruz", info: "Fundación 1985" },
+            { day: 12, month: 10, city: "ENRIQUE URIEN", province: "CHACO", info: "Fundación 1936." },
+            { day: 12, month: 10, city: "SALSACATE", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Inmaculada Concepción). Origen antiguo." },
+            { day: 12, month: 10, city: "RECOLETA", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 12, month: 10, city: "SAN FRANCISCO SOLANO", province: "BUENOS AIRES", info: "Fundación 1949." },
+            { day: 12, month: 10, city: "SAN ANTONIO DE LOS COBRES", province: "SALTA", info: "Fecha tradicional. Origen minero." },
+            { day: 12, month: 10, city: "PILAR", province: "BUENOS AIRES", info: "Referencia a Fiesta Patronal (Nuestra Señora del Pilar). Creación del Partido 1864." },
+            { day: 12, month: 10, city: "NECOCHEA", province: "BUENOS AIRES", info: "Fundación 1881." },
+            { day: 12, month: 10, city: "ICAÑO", province: "CATAMARCA", info: "Fundación 1876." },
+            { day: 12, month: 10, city: "IDIAZABAL", province: "CÓRDOBA", info: "Fundación 1910." },
+            { day: 12, month: 10, city: "PILAR", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Nuestra Señora del Pilar)." },
+            { day: 12, month: 10, city: "PILAR", province: "SANTA FE", info: "Fundación 1876." },
+            { day: 13, month: 10, city: "SA PEREYRA", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 13, month: 10, city: "VILLA CENTENARIO", province: "BUENOS AIRES", info: "Declaración como Ciudad 1995." },
+            { day: 13, month: 10, city: "SANTA MARIA DE PUNILLA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Lucía). Origen antiguo." },
+            { day: 14, month: 10, city: "PATERNAL", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 14, month: 10, city: "CHEPES", province: "LA RIOJA", info: "Referencia a inauguración estación de tren (1910)." },
+            { day: 14, month: 10, city: "PUELEN", province: "LA PAMPA", info: "Fundación 1901." },
+            { day: 14, month: 10, city: "GENERAL CONESA", province: "RÍO NEGRO", info: "Fundación 1869." },
+            { day: 15, month: 10, city: "Santa Fe (Capital)", province: "Santa Fe", info: "Fundación 1573" },
+            { day: 15, month: 10, city: "SANTA TERESA", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 15, month: 10, city: "PALACIOS", province: "SANTA FE", info: "Referencia a habilitación Estación de Tren (1891)." },
+            { day: 15, month: 10, city: "CONSTANZA", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 15, month: 10, city: "PUEBLO MARINI", province: "SANTA FE", info: "Fundación 1893." },
+            { day: 15, month: 10, city: "PALMA SOLA", province: "JUJUY", info: "Fundación 1949." },
+            { day: 15, month: 10, city: "GALVEZ", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 15, month: 10, city: "SANTO DOMINGO", province: "SANTA FE", info: "Fundación 1891." },
+            { day: 15, month: 10, city: "TILCARA", province: "JUJUY", info: "Referencia a Fiesta Patronal (Virgen del Rosario). Origen prehispánico." },
+            { day: 15, month: 10, city: "GUATIMOZIN", province: "CÓRDOBA", info: "Fundación 1911." },
+            { day: 15, month: 10, city: "TANCACHA", province: "CÓRDOBA", info: "Fundación 1913." },
+            { day: 15, month: 10, city: "SATURNINO MARIA LASPIUR", province: "CÓRDOBA", info: "Fundación 1911." },
+            { day: 15, month: 10, city: "PUEBLO URANGA", province: "SANTA FE", info: "Fundación 1891." },
+            { day: 16, month: 10, city: "TEMPERLEY", province: "BUENOS AIRES", info: "Fundación (loteo inicial) 1870." },
+            { day: 16, month: 10, city: "VERSALLES", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 16, month: 10, city: "BENAVIDEZ", province: "BUENOS AIRES", info: "Fundación 1886." },
+            { day: 17, month: 10, city: "Caucete (Villa Colón)", province: "San Juan", info: "Fundación 1893" },
+            { day: 17, month: 10, city: "MARIA TERESA", province: "SANTA FE", info: "Fundación 1890." },
+            { day: 17, month: 10, city: "LA CLOTILDE", province: "CHACO", info: "Fundación 1921." },
+            { day: 17, month: 10, city: "PUERTO EVA PERON", province: "CHACO", info: "Inauguración de obras y nombre 1952." },
+            { day: 17, month: 10, city: "RAMALLO", province: "BUENOS AIRES", info: "Referencia a Fiesta Patronal (Santa Teresa de Jesús)." },
+            { day: 18, month: 10, city: "LAS AVISPAS", province: "SANTA FE", info: "Creación Comuna 1909." },
+            { day: 18, month: 10, city: "GUALEGUAYCHU", province: "ENTRE RÍOS", info: "Fundación 1783." },
+            { day: 18, month: 10, city: "ANCASTILLO", province: "CATAMARCA", info: "Referencia a Fiesta Patronal (San Lucas)." },
+            { day: 19, month: 10, city: "MARCOS JUAREZ", province: "CÓRDOBA", info: "Fundación 1887." },
+            { day: 19, month: 10, city: "ALEJO LEDESMA", province: "CÓRDOBA", info: "Fundación 1902." },
+            { day: 19, month: 10, city: "SUNCHALES", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 20, month: 10, city: "SEGUI", province: "ENTRE RÍOS", info: "Fundación 1907." },
+            { day: 20, month: 10, city: "TRENEL", province: "LA PAMPA", info: "Fundación 1906." },
+            { day: 20, month: 10, city: "AÑELO", province: "NEUQUÉN", info: "Fundación 1915." },
+            { day: 20, month: 10, city: "GOBERNADOR ROCA", province: "MISIONES", info: "Fundación 1934." },
+            { day: 20, month: 10, city: "LANUS ESTE", province: "BUENOS AIRES", info: "Aniversario del Partido de Lanús (1944)." },
+            { day: 20, month: 10, city: "VALENTIN ALSINA", province: "BUENOS AIRES", info: "Aniversario del Partido de Lanús (1944)." },
+            { day: 20, month: 10, city: "REMEDIOS DE ESCALADA DE SAN MARTIN", province: "BUENOS AIRES", info: "Aniversario del Partido de Lanús (1944)." },
+            { day: 20, month: 10, city: "LANUS OESTE", province: "BUENOS AIRES", info: "Aniversario del Partido de Lanús (1944)." },
+            { day: 20, month: 10, city: "TRELEW", province: "CHUBUT", info: "Fundación 1886." },
+            { day: 20, month: 10, city: "MARIANO MORENO", province: "NEUQUÉN", info: "Fundación 1942." },
+            { day: 21, month: 10, city: "MOJON GRANDE", province: "MISIONES", info: "Fundación 1953." },
+            { day: 21, month: 10, city: "CASEROS", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 21, month: 10, city: "CORONEL BRANDSEN", province: "BUENOS AIRES", info: "Creación Partido 1875." },
+            { day: 22, month: 10, city: "Cutral Có", province: "Neuquén", info: "Fundación 1933" },
+            { day: 22, month: 10, city: "LOS MOLLES", province: "SAN LUIS", info: "Fecha tradicional." },
+            { day: 23, month: 10, city: "GENERAL PINTO", province: "BUENOS AIRES", info: "Fundación 1869." },
+            { day: 24, month: 10, city: "Rafaela", province: "Santa Fe", info: "Fecha fundacional 1881" },
+            { day: 24, month: 10, city: "SUIPACHA", province: "BUENOS AIRES", info: "Fundación 1864." },
+            { day: 24, month: 10, city: "MAXIMO PAZ", province: "BUENOS AIRES", info: "Fundación 1889." },
+            { day: 25, month: 10, city: "BAHIA SAN BLAS", province: "BUENOS AIRES", info: "Fundación 1821." },
+            { day: 25, month: 10, city: "TRICAO MALAL", province: "NEUQUÉN", info: "Fundación 1932." },
+            { day: 26, month: 10, city: "Cafayate", province: "Salta", info: "Fundación 1840" },
+            { day: 26, month: 10, city: "VILLA BALLESTER", province: "BUENOS AIRES", info: "Fundación 1889." },
+            { day: 26, month: 10, city: "ALGARROBO DEL AGUILA", province: "LA PAMPA", info: "Fundación 1905." },
+            { day: 26, month: 10, city: "VISTA ALEGRE SUR", province: "NEUQUÉN", info: "Creación del Municipio de Vista Alegre 1971." },
+            { day: 27, month: 10, city: "CALILEGUA", province: "JUJUY", info: "Fundación (Loteo) 1905." },
+            { day: 27, month: 10, city: "ALBERTI", province: "BUENOS AIRES", info: "Fundación 1877." },
+            { day: 27, month: 10, city: "BECCAR", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1913)." },
+            { day: 27, month: 10, city: "NUÑEZ", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 27, month: 10, city: "PIAMMISTEGUY", province: "BUENOS AIRES", info: "Fecha de creación del Partido de Las Flores 1839." },
+            { day: 28, month: 10, city: "CAZADORES CORRENTINOS", province: "CORRIENTES", info: "Fundación 1935." },
+            { day: 28, month: 10, city: "VILLA GUILLERMINA", province: "SANTA FE", info: "Fundación 1902." },
+            { day: 29, month: 10, city: "PERICO", province: "JUJUY", info: "Fundación 1913." },
+            { day: 30, month: 10, city: "CAPILLA DEL MONTE", province: "CÓRDOBA", info: "Fundación 1585 (merced de tierras)." },
+            { day: 31, month: 10, city: "Benito Juárez", province: "Buenos Aires", info: "Fundación del Partido 1867" },
+            { day: 31, month: 10, city: "Concepción", province: "Tucumán", info: "Fundación 1888" },
+
+            // Noviembre
+            { day: 1, month: 11, city: "MIRAFLORES", province: "CHACO", info: "Fundación 1943." },
+            { day: 1, month: 11, city: "CORRALITO", province: "CÓRDOBA", info: "Fundación 1913." },
+            { day: 1, month: 11, city: "ORDOÑEZ", province: "CÓRDOBA", info: "Fundación 1910." },
+            { day: 1, month: 11, city: "VILLA GENERAL MITRE", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 1, month: 11, city: "EPUYEN", province: "CHUBUT", info: "Fundación 1908." },
+            { day: 1, month: 11, city: "FLORIDA", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1891)." },
+            { day: 1, month: 11, city: "FLORIDA OESTE", province: "BUENOS AIRES", info: "Aniversario compartido con Florida (estación 1891)." },
+            { day: 3, month: 11, city: "SAN MARTIN DOS", province: "FORMOSA", info: "Fundación 1934." },
+            { day: 3, month: 11, city: "VILLA ELISA", province: "ENTRE RÍOS", info: "Fundación 1890." },
+            { day: 4, month: 11, city: "SAN CARLOS", province: "MENDOZA", info: "Fundación de Villa San Carlos (cabecera) 1772." },
+            { day: 4, month: 11, city: "BERAZATEGUI", province: "BUENOS AIRES", info: "Creación Partido 1960." },
+            { day: 5, month: 11, city: "GOBERNADOR COSTA", province: "CHUBUT", info: "Fundación 1926." },
+            { day: 5, month: 11, city: "LA LUCILA", province: "BUENOS AIRES", info: "Referencia a inauguración estación de tren (1933)." },
+            { day: 6, month: 11, city: "LUIS GUILLON", province: "BUENOS AIRES", info: "Inauguración Estación de Tren 1909." },
+            { day: 7, month: 11, city: "Villa Regina", province: "Río Negro", info: "Fundación 1924" },
+            { day: 7, month: 11, city: "TILISARAO", province: "SAN LUIS", info: "Fundación 1888." },
+            { day: 7, month: 11, city: "TENIENTE GENERAL ROSENDO M. FRAGA", province: "FORMOSA", info: "Fundación 1915." },
+            { day: 8, month: 11, city: "Posadas (Refundación)", province: "Misiones", info: "Refundación 1870" },
+            { day: 8, month: 11, city: "CASBAS", province: "BUENOS AIRES", info: "Fundación 1911." },
+            { day: 8, month: 11, city: "POSADAS", province: "MISIONES", info: "Refundación 1870." },
+            { day: 9, month: 11, city: "GENERAL LEVALLE", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 10, month: 11, city: "MIGUEL CANE", province: "LA PAMPA", info: "Fundación 1906." },
+            { day: 10, month: 11, city: "SAN MARCOS SUD", province: "CÓRDOBA", info: "Fundación 1888." },
+            { day: 11, month: 11, city: "GENERAL PICO", province: "LA PAMPA", info: "Fundación 1905." },
+            { day: 11, month: 11, city: "BUENA ESPERANZA", province: "SAN LUIS", info: "Fundación 1904." },
+            { day: 11, month: 11, city: "CHRISTOPHERSEN", province: "SANTA FE", info: "Fundación 1904." },
+            { day: 11, month: 11, city: "CERRO CORA", province: "MISIONES", info: "Fundación 1933." },
+            { day: 11, month: 11, city: "SAN MARTIN", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (San Martín de Tours)." },
+            { day: 11, month: 11, city: "JOSE B. CASAS", province: "BUENOS AIRES", info: "Fundación 1911." },
+            { day: 12, month: 11, city: "Colón", province: "Buenos Aires", info: "Fundación 1892" },
+            { day: 12, month: 11, city: "GARUPA", province: "MISIONES", info: "Fundación 1942." },
+            { day: 13, month: 11, city: "DON TORCUATO ESTE", province: "BUENOS AIRES", info: "Fundación 1927." },
+            { day: 13, month: 11, city: "DON TORCUATO OESTE", province: "BUENOS AIRES", info: "Fundación 1927." },
+            { day: 14, month: 11, city: "EL PATO", province: "BUENOS AIRES", info: "Inauguración estación 1924." },
+            { day: 15, month: 11, city: "Santa Fe (Capital)", province: "Santa Fe", info: "Fundación 1573" },
+            { day: 15, month: 11, city: "CERRO AZUL", province: "MISIONES", info: "Fundación 1936." },
+            { day: 15, month: 11, city: "BERROTARAN", province: "CÓRDOBA", info: "Fundación 1913." },
+            { day: 15, month: 11, city: "SANTA FE", province: "SANTA FE", info: "Fundación 1573." },
+            { day: 16, month: 11, city: "Malargüe", province: "Mendoza", info: "Refundación / Declaración Villa 1887" },
+            { day: 16, month: 11, city: "VERSALLES", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 16, month: 11, city: "CURUZU CUATIA", province: "CORRIENTES", info: "Fundación 1810." },
+            { day: 16, month: 11, city: "GUILLERMO ENRIQUE HUDSON", province: "BUENOS AIRES", info: "Inauguración estación 1872." },
+            { day: 16, month: 11, city: "ÑORQUINCO", province: "RÍO NEGRO", info: "Fundación 1903." },
+            { day: 17, month: 11, city: "La Escondida", province: "Chaco", info: "Creación Comisión Fomento 1927" },
+            { day: 17, month: 11, city: "PLAYA UNION", province: "CHUBUT", info: "Referencia a llegada del primer tren (1923)." },
+            { day: 17, month: 11, city: "GENERAL ALVEAR", province: "MISIONES", info: "Fundación 1946." },
+            { day: 17, month: 11, city: "INGENIERO ADOLFO SOURDEAUX", province: "BUENOS AIRES", info: "Referencia a Día de la Localidad." },
+            { day: 18, month: 11, city: "QUINES", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (Virgen del Rosario de Quines)." },
+            { day: 18, month: 11, city: "SAN MIGUEL DEL MONTE", province: "BUENOS AIRES", info: "Fecha tradicional de fundación (1864, creación del partido). Origen como guardia/fortín anterior." },
+            { day: 18, month: 11, city: "NICANOR OLIVERA", province: "BUENOS AIRES", info: "Fundación 1908 (La Dulce)." },
+            { day: 18, month: 11, city: "BALNEARIA", province: "CÓRDOBA", info: "Fundación 1911." },
+            { day: 19, month: 11, city: "SAN JOSE", province: "MISIONES", info: "Refundación 1867." },
+            { day: 19, month: 11, city: "ESTANCIA GRANDE", province: "SAN LUIS", info: "Fundación 1858." },
+            { day: 19, month: 11, city: "LAGUNA LARGA", province: "CÓRDOBA", info: "Fundación 1869." },
+            { day: 19, month: 11, city: "SALADAS", province: "CORRIENTES", info: "Fundación 1732." },
+            { day: 20, month: 11, city: "Caleta Olivia", province: "Santa Cruz", info: "Fundación 1901" },
+            { day: 20, month: 11, city: "VILLAGUAY", province: "ENTRE RÍOS", info: "Fundación 1823." },
+            { day: 20, month: 11, city: "INGENIERO PABLO NOGUES", province: "BUENOS AIRES", info: "Referencia a inauguración estación (1907)." },
+            { day: 20, month: 11, city: "GOBERNADOR MANSILLA", province: "ENTRE RÍOS", info: "Fundación 1890." },
+            { day: 21, month: 11, city: "LUAN TORO", province: "LA PAMPA", info: "Fundación 1907." },
+            { day: 21, month: 11, city: "CUESTA BLANCA", province: "CÓRDOBA", info: "Fecha fundacional adoptada (primeros loteos ca. 1890)." },
+            { day: 21, month: 11, city: "FIGHIERA", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 21, month: 11, city: "ALEJANDRA", province: "SANTA FE", info: "Fundación 1870." },
+            { day: 22, month: 11, city: "VILLA GENERAL MITRE", province: "SANTIAGO DEL ESTERO", info: "Referencia a inauguración estación de tren (Pinto) 1890." },
+            { day: 23, month: 11, city: "BELGRANO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 23, month: 11, city: "RIVADAVIA", province: "SALTA", info: "Fundación 1911." },
+            { day: 23, month: 11, city: "MONTE CHINGOLO", province: "BUENOS AIRES", info: "Fundación 1815." },
+            { day: 24, month: 11, city: "LA TOMA", province: "SAN LUIS", info: "Fundación 1905." },
+            { day: 24, month: 11, city: "HUANCHILLA", province: "CÓRDOBA", info: "Fundación 1911." },
+            { day: 25, month: 11, city: "LA TOMA", province: "SAN LUIS", info: "Fundación 1905." },
+            { day: 25, month: 11, city: "VILLA QUINTEROS", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Cristo Rey)." },
+            { day: 25, month: 11, city: "DINA HUAPI", province: "RÍO NEGRO", info: "Creación Comisión de Fomento 1986." },
+            { day: 25, month: 11, city: "SANTA CATALINA", province: "JUJUY", info: "Referencia a Fiesta Patronal (Santa Catalina)." },
+            { day: 25, month: 11, city: "VILLA DEL PRADO", province: "CÓRDOBA", info: "Fundación 1949." },
+            { day: 25, month: 11, city: "COLONIA ALMADA", province: "CÓRDOBA", info: "Fundación 1903." },
+            { day: 26, month: 11, city: "INTENDENTE ALVEAR", province: "LA PAMPA", info: "Fundación 1896." },
+            { day: 26, month: 11, city: "SAN ESTEBAN", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Esteban)." },
+            { day: 26, month: 11, city: "JUAN BAUTISTA ALBERDI", province: "TUCUMÁN", info: "Fundación 1888." },
+            { day: 27, month: 11, city: "VILLA LLANQUIN", province: "RÍO NEGRO", info: "Fundación 1940." },
+            { day: 27, month: 11, city: "BAJADA DEL AGRIO", province: "NEUQUÉN", info: "Fundación 1926." },
+            { day: 28, month: 11, city: "Quilino", province: "Córdoba", info: "Fundación 1875" },
+            { day: 28, month: 11, city: "Villa Quilino", province: "Córdoba", info: "Se considera fecha de Quilino (1875)" },
+            { day: 28, month: 11, city: "ROSPENTEK", province: "SANTA CRUZ", info: "Fundación 1943 (Regimiento)." },
+            { day: 29, month: 11, city: "CONCORDIA", province: "ENTRE RÍOS", info: "Fundación 1831." },
+            { day: 29, month: 11, city: "STROEDER", province: "BUENOS AIRES", info: "Fundación 1913." },
+            { day: 30, month: 11, city: "SAN ANDRES DE GILES", province: "BUENOS AIRES", info: "Fundación 1806." },
+            { day: 30, month: 11, city: "VILLA OCAMPO", province: "SANTA FE", info: "Fundación 1878." },
+
+            // Diciembre
+            { day: 1, month: 12, city: "Villa Mercedes", province: "San Luis", info: "Fundación 1856" },
+            { day: 1, month: 12, city: "LLAVALLOL", province: "BUENOS AIRES", info: "Inauguración estación de tren 1885." },
+            { day: 1, month: 12, city: "CIUDADELA", province: "BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 1, month: 12, city: "VILLA LURO", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 1, month: 12, city: "FORTUNA", province: "SAN LUIS", info: "Fundación 1906." },
+            { day: 1, month: 12, city: "CASALEGNO", province: "SANTA FE", info: "Fundación 1910." },
+            { day: 3, month: 12, city: "Agua Escondida", province: "Mendoza", info: "Fecha de fundación 1950" },
+            { day: 3, month: 12, city: "SAN JAVIER", province: "SANTA FE", info: "Referencia a Fiesta Patronal (San Francisco Javier). Origen como Reducción Jesuítica (1743)." },
+            { day: 3, month: 12, city: "SAN JAVIER", province: "MISIONES", info: "Referencia a Fiesta Patronal (San Francisco Javier). Fundación 1877." },
+            { day: 3, month: 12, city: "INGENIERO GUSTAVO ANDRE", province: "MENDOZA", info: "Referencia a Fiesta Patronal (San Francisco Javier)." },
+            { day: 4, month: 12, city: "Santa Lucía", province: "San Juan", info: "Fundación 1869" },
+            { day: 4, month: 12, city: "PIGUE", province: "BUENOS AIRES", info: "Fundación 1884." },
+            { day: 7, month: 12, city: "El Calafate", province: "Santa Cruz", info: "Fundación 1927" },
+            { day: 7, month: 12, city: "ITATI", province: "CORRIENTES", info: "Fundación 1615." },
+            { day: 8, month: 12, city: "Chilca Juliana", province: "Santiago del Estero", info: "Referencia Fiesta Patronal" },
+            { day: 8, month: 12, city: "SALSACATE", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Inmaculada Concepción). Origen antiguo." },
+            { day: 8, month: 12, city: "EL JARDIN", province: "SALTA", info: "Referencia a Fiesta Patronal (Inmaculada Concepción)." },
+            { day: 8, month: 12, city: "GENERAL JUAN MADARIAGA", province: "BUENOS AIRES", info: "Fundación 1907." },
+            { day: 8, month: 12, city: "MILAGRO", province: "LA RIOJA", info: "Referencia a Fiesta Patronal (Inmaculada Concepción). Fundación ligada al ferrocarril (1910)." },
+            { day: 8, month: 12, city: "RIO DE LOS SAUCES", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Inmaculada Concepción)." },
+            { day: 8, month: 12, city: "LAS LAGUNAS", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (Inmaculada Concepción)." },
+            { day: 8, month: 12, city: "ARROYO LOS PATOS", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Inmaculada Concepción)." },
+            { day: 8, month: 12, city: "EL TRAPICHE", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (Inmaculada Concepción)." },
+            { day: 8, month: 12, city: "CONCEPCION DE LA SIERRA", province: "MISIONES", info: "Refundación Jesuítica 1619." },
+            { day: 8, month: 12, city: "VILLA DEL PARQUE", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 8, month: 12, city: "AGUA DE ORO", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Inmaculada Concepción). Origen antiguo (referencia 1641)." },
+            { day: 8, month: 12, city: "CONCEPCION DEL BERMEJO", province: "CHACO", info: "Fundación 1934." },
+            { day: 8, month: 12, city: "ARCADIA", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Inmaculada Concepción)." },
+            { day: 8, month: 12, city: "MONTE BELLO", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Inmaculada Concepción)." },
+            { day: 8, month: 12, city: "VILLA PARQUE SIQUIMAN", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal. Población ~2000 (2010)" },
+            { day: 8, month: 12, city: "CORONEL JUAN SOLA", province: "SALTA", info: "Fundación 1932 (Morillo)." },
+            { day: 9, month: 12, city: "9 DE JULIO", province: "SAN JUAN", info: "Creación del Departamento 1942." },
+            { day: 10, month: 12, city: "LORETO", province: "MISIONES", info: "Fundación 1610 (Refundación 1877)." },
+            { day: 10, month: 12, city: "ARIZONA", province: "SAN LUIS", info: "Fundación 1926." },
+            { day: 11, month: 12, city: "Chimbas", province: "San Juan", info: "Fundación 1913" },
+            { day: 11, month: 12, city: "SALTO ENCANTADO", province: "MISIONES", info: "Creación del Municipio 2014." },
+            { day: 12, month: 12, city: "Colón", province: "Buenos Aires", info: "Fundación 1892" },
+            { day: 12, month: 12, city: "VELEZ SARSFIELD", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a Día del Barrio." },
+            { day: 13, month: 12, city: "PAGO DE LOS DESEOS", province: "CORRIENTES", info: "Referencia a Fiesta Patronal (Santa Lucía) y creación del municipio (2012)." },
+            { day: 13, month: 12, city: "SANTA MARIA DE PUNILLA", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Lucía). Origen antiguo." },
+            { day: 13, month: 12, city: "VILLA CENTENARIO", province: "BUENOS AIRES", info: "Declaración como Ciudad 1995." },
+            { day: 13, month: 12, city: "LA COCHA", province: "TUCUMÁN", info: "Referencia a Fiesta Patronal (Santa Lucía)." },
+            { day: 13, month: 12, city: "LA POMA", province: "SALTA", info: "Referencia a Fiesta Patronal (Santa Lucía). Origen antiguo." },
+            { day: 13, month: 12, city: "EL BRETE", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (Santa Lucía)." },
+            { day: 13, month: 12, city: "DON TORCUATO ESTE", province: "BUENOS AIRES", info: "Fundación 1927." },
+            { day: 13, month: 12, city: "DON TORCUATO OESTE", province: "BUENOS AIRES", info: "Fundación 1927." },
+            { day: 13, month: 12, city: "SAN JORGE", province: "SANTA FE", info: "Fundación 1886." },
+            { day: 14, month: 12, city: "GOLDNEY", province: "BUENOS AIRES", info: "Fundación 1906." },
+            { day: 14, month: 12, city: "ARMSTRONG", province: "SANTA FE", info: "Fundación 1882." },
+            { day: 15, month: 12, city: "Santa Fe (Capital)", province: "Santa Fe", info: "Fundación 1573" },
+            { day: 15, month: 12, city: "CHOLILA", province: "CHUBUT", info: "Creación Comisión de Fomento 1944." },
+            { day: 15, month: 12, city: "PASO DEL REY", province: "BUENOS AIRES", info: "Fundación 1938." },
+            { day: 15, month: 12, city: "PLATANOS", province: "BUENOS AIRES", info: "Inauguración estación 1872." },
+            { day: 16, month: 12, city: "AZUL", province: "BUENOS AIRES", info: "Fundación 1832." },
+            { day: 18, month: 12, city: "LINIERS", province: "CIUDAD DE BUENOS AIRES", info: "Referencia a inauguración estación de tren (1887)." },
+            { day: 19, month: 12, city: "Río Gallegos", province: "Santa Cruz", info: "Fundación 1885" },
+            { day: 19, month: 12, city: "INDIO RICO", province: "BUENOS AIRES", info: "Fundación 1929." },
+            { day: 19, month: 12, city: "RIO GALLEGOS", province: "SANTA CRUZ", info: "Fundación 1885." },
+            { day: 20, month: 12, city: "San Martín", province: "Mendoza", info: "Fundación 1816" },
+            { day: 20, month: 12, city: "BELEN", province: "CATAMARCA", info: "Fundación 1681." },
+            { day: 20, month: 12, city: "CIUDAD DE SAN MARTIN", province: "MENDOZA", info: "Referencia a creación / cambio de nombre 1816/1823. Origen anterior." },
+            { day: 20, month: 12, city: "RINCON DE LOS SAUCES", province: "NEUQUÉN", info: "Fundación 1971." },
+            { day: 21, month: 12, city: "PILA", province: "BUENOS AIRES", info: "Creación del Partido 1839." },
+            { day: 21, month: 12, city: "LAS OVEJAS", province: "NEUQUÉN", info: "Fundación 1933." },
+            { day: 24, month: 12, city: "NASCHEL", province: "SAN LUIS", info: "Fundación 1905." },
+            { day: 24, month: 12, city: "LA PAZ", province: "MENDOZA", info: "Creación del Departamento 1850." },
+            { day: 25, month: 12, city: "TRES LOMAS", province: "BUENOS AIRES", info: "Fundación 1906." },
+            { day: 25, month: 12, city: "VILLA DEL CARMEN", province: "SAN LUIS", info: "Referencia a Fiesta Patronal (Nuestra Señora del Carmen)." },
+            { day: 25, month: 12, city: "LA PAZ", province: "MENDOZA", info: "Creación del Departamento 1850." },
+            { day: 26, month: 12, city: "Aguilares", province: "Tucumán", info: "Fundación 1888" },
+            { day: 26, month: 12, city: "LEANDRO N. ALEM", province: "MISIONES", info: "Fundación 1925." },
+            { day: 26, month: 12, city: "VILLA SAN ESTEBAN", province: "CÓRDOBA", info: "Referencia a Fiesta Patronal (San Esteban)." },
+            { day: 27, month: 12, city: "ROJAS", province: "BUENOS AIRES", info: "Referencia a creación/reconocimiento del Partido (1821/1822). Origen como fortín anterior (ca. 1777)." },
+            { day: 27, month: 12, city: "JUNIN", province: "BUENOS AIRES", info: "Fundación 1827." },
+            { day: 28, month: 12, city: "Hurlingham", province: "Buenos Aires", info: "Creación del Partido 1994" },
+            { day: 28, month: 12, city: "LIBERTADOR GENERAL SAN MARTIN", province: "JUJUY", info: "Fundación 1899." },
+            { day: 29, month: 12, city: "LAS JUNTAS", province: "CATAMARCA", info: "Fundación 1873." },
+            { day: 29, month: 12, city: "HUERTA GRANDE", province: "CÓRDOBA", info: "Referencia a inauguración estación 1892." },
+            { day: 30, month: 12, city: "PALOMAR", province: "SANTIAGO DEL ESTERO", info: "Fecha de Fundación." }
+        ];
+
+        // --- ELEMENTOS DEL DOM ---
+        const monthSelect = document.getElementById('monthFilter');
+        const weekSelect = document.getElementById('weekFilter');
+        const tableBody = document.getElementById('tableBody');
+
+        // --- FUNCIONES ---
+        function formatDate(day, month) {
+            const formattedDay = String(day).padStart(2, '0');
+            const formattedMonth = String(month).padStart(2, '0');
+            return `${formattedDay}/${formattedMonth}`;
+        }
+
+        function renderTable(dataToDisplay) {
+            tableBody.innerHTML = ''; // Limpiar tabla
+
+            if (dataToDisplay.length === 0) {
+                const row = tableBody.insertRow();
+                const cell = row.insertCell();
+                cell.colSpan = 5;
+                cell.textContent = 'No se encontraron aniversarios con los filtros seleccionados.';
+                cell.className = 'no-results-message';
+                return;
+            }
+
+            dataToDisplay.forEach(ann => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = formatDate(ann.day, ann.month);
+                row.insertCell().textContent = ann.city;
+                row.insertCell().textContent = ann.province;
+                row.insertCell().textContent = ann.info;
+                row.insertCell().textContent = "A consultar";
+            });
+        }
+
+        function filterAnniversaries() {
+            const selectedMonthValue = monthSelect.value;
+            const selectedWeekValue = weekSelect.value;
+
+            let filteredResults = anniversaries;
+
+            // Filtrar por mes
+            if (selectedMonthValue) { // Si hay un mes seleccionado (no es "Todos los meses")
+                const monthNum = parseInt(selectedMonthValue);
+                filteredResults = filteredResults.filter(ann => ann.month === monthNum);
+            }
+
+            // Filtrar por semana (sobre los resultados del filtro de mes)
+            if (selectedWeekValue) { // Si hay una semana seleccionada (no es "Todas las semanas")
+                const weekNum = parseInt(selectedWeekValue);
+                filteredResults = filteredResults.filter(ann => {
+                    const day = ann.day;
+                    switch (weekNum) {
+                        case 1: return day >= 1 && day <= 7;
+                        case 2: return day >= 8 && day <= 14;
+                        case 3: return day >= 15 && day <= 21;
+                        case 4: return day >= 22 && day <= 28;
+                        case 5: return day >= 29;
+                        default: return true;
+                    }
+                });
+            }
+            renderTable(filteredResults);
+        }
+
+        // --- EVENT LISTENERS ---
+        monthSelect.addEventListener('change', filterAnniversaries);
+        weekSelect.addEventListener('change', filterAnniversaries);
+
+        // --- INICIALIZACIÓN ---
+        // Cargar todos los datos al inicio
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTable(anniversaries);
+        });
+    </script>
+</body>
+</html>
