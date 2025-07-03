@@ -1,5 +1,4 @@
 [
-    // --- BUENOS AIRES (IDs 1-761) ---
     { "id": 1, "name": "Fiesta de los Reyes Magos", "month": 1, "location": "Adolfo Gonzáles Chaves", "province": "Buenos Aires", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2, "name": "Quema de Muñecos de Fin de Año", "month": 1, "location": "La Plata", "province": "Buenos Aires", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 3, "name": "Fiesta de Año Nuevo \"¡Hasta que Salga el Sol!\"", "month": 1, "location": "Pehuen Có", "province": "Buenos Aires", "contactName": "", "contactPhone": "2932 40-7007", "email": "sofpehuenco@gmail.com", "status": "Pendiente", "notes": "" },
@@ -301,73 +300,50 @@
     { "id": 299, "name": "Procesión Náutica", "month": 12, "location": "Bovril", "province": "Buenos Aires", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 300, "name": "Encuentro Nacional de Danzas Nativas “Sentimiento“", "month": 1, "location": "Colón", "province": "Buenos Aires", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 761, "name": "Día Nacional del Tango", "month": 12, "location": "San Fernando", "province": "Buenos Aires", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 762, "name": "Encuentro Nacional de Danzas Nativas “Sentimiento“", "month": 1, "location": "Santa María", "province": "Catamarca", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 934, "name": "Semana Aniversario Ciudad de Belén", "month": 12, "location": "Belén", "province": "Catamarca", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 935, "name": "Corso de la dulzura", "month": 1, "location": "Isla del Cerrito", "province": "Chaco", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 966, "name": "FN: Fiesta Nacional del Arte Indígena", "month": 12, "location": "Quitilipi", "province": "Chaco", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 967, "name": "Festival Provincial Gato y Mancha", "month": 1, "location": "Alto Río Seguer", "province": "Chubut", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 1049, "name": "FN: Fiesta Nacional de la Trucha", "month": 12, "location": "Rotativa - Ente Oficial Regional de Turismo Patagonia", "province": "Chubut", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 1050, "name": "FN: Fiesta Nacional de la Doma y el Folklore", "month": 1, "location": "Jesús María", "province": "Córdoba", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 1351, "name": "Fiesta de la Virgen Medalla Milagrosa", "month": 12, "location": "Las Higueras", "province": "Córdoba", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 1352, "name": "Fiesta de Pesca Variada con Devolución", "month": 1, "location": "Esquina", "province": "Corrientes", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 1382, "name": "Fiesta de la Boga", "month": 12, "location": "Empedrado", "province": "Corrientes", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 1383, "name": "FN: Fiesta Nacional de la Sandía", "month": 1, "location": "Santa Ana", "province": "Entre Ríos", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 1691, "name": "Fiesta Provincial del Arándano", "month": 12, "location": "La Criolla", "province": "Entre Ríos", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 1692, "name": "FN: Fiesta Nacional de la Corvina", "month": 2, "location": "Herradura", "province": "Formosa", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 1733, "name": "Formosa Da Gusto Edición Navidad", "month": 12, "location": "Formosa", "province": "Formosa", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 1734, "name": "Enero Tilcareño", "month": 1, "location": "Tilcara", "province": "Jujuy", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 1807, "name": "Fiestas Patronales en Honor a Santa Bárbara", "month": 12, "location": "El Fuerte", "province": "Jujuy", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 1808, "name": "FN: Fiesta Nacional del Caballo y la Tradición", "month": 1, "location": "Ingeniero Luiggi", "province": "La Pampa", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 1854, "name": "Fiesta Regional del Antu Kuruv", "month": 12, "location": "La Humada", "province": "La Pampa", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 1855, "name": "Topamientos y Chayas Barriales", "month": 1, "location": "Varias localidades", "province": "La Rioja", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 1989, "name": "Festival Provincial del Torrontés", "month": 12, "location": "Chilecito", "province": "La Rioja", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 1990, "name": "FN: Fiesta Nacional de la Tonada", "month": 2, "location": "Tunuyán", "province": "Mendoza", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2029, "name": "Fiesta Provincal de la Cerveza", "month": 12, "location": "Godoy Cruz", "province": "Mendoza", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2030, "name": "Festival Provincial de las Carpas", "month": 1, "location": "Itacaruaré", "province": "Misiones", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2080, "name": "Fiesta Provincial de la Cerveza Artesanal Tierra Colorada", "month": 12, "location": "Posadas", "province": "Misiones", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2081, "name": "Fiesta del Gauchito Gil", "month": 1, "location": "Las Coloradas", "province": "Neuquén", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2172, "name": "FN: Fiesta Nacional de la Trucha", "month": 12, "location": "Rotativa - Ente Oficial Regional de Turismo Patagonia", "province": "Neuquén", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2173, "name": "FN: Fiesta Nacional de la Pera", "month": 1, "location": "Allen", "province": "Río Negro", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2219, "name": "FN: Fiesta Nacional de la Trucha", "month": 12, "location": "Rotativa - Ente Oficial Regional de Turismo Patagonia", "province": "Río Negro", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2220, "name": "Festival de La Trucha", "month": 1, "location": "La Poma", "province": "Salta", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2317, "name": "Fiestas Patronales en honor a la Virgen del Valle", "month": 12, "location": "Varias localidades", "province": "Salta", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2318, "name": "Fiesta de Fundación de Albardón", "month": 1, "location": "Albardón", "province": "San Juan", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2356, "name": "Fiesta de Santa Bárbara", "month": 12, "location": "Pocito", "province": "San Juan", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2357, "name": "FN: Fiesta Nacional del Mármol Ónix", "month": 1, "location": "La Toma", "province": "San Luis", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2436, "name": "FN: Fiesta Nacional de la Calle Angosta", "month": 12, "location": "Mercedes Villa", "province": "San Luis", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2437, "name": "Fiesta del Hielo", "month": 7, "location": "El Calafate", "province": "Santa Cruz", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2456, "name": "FN: Fiesta Nacional de la Trucha Steelhead", "month": 3, "location": "Comandante Luis Piedra Buena", "province": "Santa Cruz", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2457, "name": "FN: Fiesta Nacional del Camping", "month": 1, "location": "San Guillermo", "province": "Santa Fe", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2675, "name": "FN: Fiesta Nacional de la Leche", "month": 12, "location": "Totoras", "province": "Santa Fe", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2676, "name": "Festival Selva Portal del Noa", "month": 1, "location": "Selva", "province": "Santiago del Estero", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2742, "name": "FN: Fiesta Nacional del Bombo", "month": 12, "location": "Frías", "province": "Santiago del Estero", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2743, "name": "Exposición Ganadera, Industrial, Comercial y Artesanal", "month": 3, "location": "Río Grande", "province": "Tierra del Fuego", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2789, "name": "Maratón Malvinas", "month": 12, "location": "Ushuaia", "province": "Tierra del Fuego", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2790, "name": "FN: Fiesta Nacional del Queso", "month": 1, "location": "El Mollar", "province": "Tucumán", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2832, "name": "FN: Fiesta Nacional del Alfeñique", "month": 12, "location": "Acheral", "province": "Tucumán", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
-
     { "id": 2833, "name": "Fiesta del Cajón Peruano", "month": 1, "location": "Espacio Caloi", "province": "CABA", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" },
     { "id": 2887, "name": "Campeonato Argentino Abierto de Polo", "month": 11, "location": "Palermo", "province": "CABA", "contactName": "", "contactPhone": "", "email": "", "status": "Pendiente", "notes": "" }
 ]
