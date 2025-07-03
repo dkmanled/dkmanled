@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DK Fest Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Chivo:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="antialiased font-chivo">
+
+    <div id="app" class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-[#0c140d]/80 backdrop-blur-sm sticky top-0 z-40 border-b border-gray-800">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <h1 class="text-2xl font-black leading-none">
+                            <span class="text-[#01ff1d]">DK</span>
+                            <span class="text-white">FEST TRACKER</span>
+                        </h1>
+                    </div>
+                    <nav class="space-x-4">
+                        <button id="view-tasks-btn" class="px-4 py-2 text-sm font-bold bg-[#01ff1d] text-[#090f0a] rounded-md transition hover:bg-opacity-80">Tareas del Día</button>
+                        <button id="view-all-btn" class="px-4 py-2 text-sm font-bold text-[#01ff1d] border-2 border-[#01ff1d] rounded-md transition hover:bg-[#01ff1d] hover:text-[#090f0a]">Todas las Fiestas</button>
+                        <button id="add-fiesta-btn" class="px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-md transition hover:bg-blue-700">Agregar Fiesta</button>
+                    </nav>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+            <!-- Daily Tasks View -->
+            <div id="tasks-view">
+                <h2 class="text-3xl font-bold text-white mb-6">Tareas del Día</h2>
+                <div id="tasks-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                    <!-- Daily task cards will be injected here -->
+                </div>
+            </div>
+
+            <!-- All Festivals View (hidden by default) -->
+            <div id="all-festivals-view" class="hidden">
+                <h2 class="text-3xl font-bold text-white mb-6">Base de Datos de Fiestas</h2>
+                <div class="mb-4">
+                    <input type="text" id="search-input" placeholder="Buscar por nombre, provincia o localidad..." class="w-full p-3 bg-[#0c140d] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] focus:border-[#01ff1d] outline-none">
+                </div>
+                <div class="bg-[#0c140d] rounded-lg shadow-lg overflow-hidden">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-800">
+                            <tr>
+                                <th scope="col" class="p-4 w-4"></th>
+                                <th scope="col" class="px-6 py-3">Nombre</th>
+                                <th scope="col" class="px-6 py-3">Mes</th>
+                                <th scope="col" class="px-6 py-3">Lugar</th>
+                                <th scope="col" class="px-6 py-3">Provincia</th>
+                                <th scope="col" class="px-6 py-3">Estado</th>
+                                <th scope="col" class="px-6 py-3">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="festivals-table-body">
+                            <!-- Table rows will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Editing -->
+    <div id="edit-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 hidden opacity-0">
+        <div class="modal-content transform -translate-y-10 bg-[#0c140d] rounded-lg shadow-2xl w-full max-w-lg mx-4 border-2 border-[#01ff1d]">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="modal-title" class="text-2xl font-bold text-white">Gestionar Fiesta</h3>
+                    <button id="close-modal-btn" class="text-gray-400 hover:text-white">&times;</button>
+                </div>
+                <form id="edit-form">
+                    <input type="hidden" id="edit-id">
+
+                    <!-- Campos no editables -->
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-400">Nombre Fiesta</label>
+                        <p id="modal-readonly-name" class="mt-1 text-white"></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400">Mes</label>
+                            <p id="modal-readonly-month" class="mt-1 text-white"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-400">Lugar</label>
+                            <p id="modal-readonly-location" class="mt-1 text-white"></p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="block text-sm font-medium text-gray-400">Provincia</label>
+                        <p id="modal-readonly-province" class="mt-1 text-white"></p>
+                    </div>
+                    <hr class="border-gray-700 my-4">
+
+                    <!-- Campos editables -->
+                    <div class="space-y-4">
+                        <div>
+                            <label for="edit-contactName" class="block text-sm font-medium text-gray-300">Nombre Contacto</label>
+                            <input type="text" id="edit-contactName" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="edit-contactPhone" class="block text-sm font-medium text-gray-300">Teléfono Contacto</label>
+                            <input type="text" id="edit-contactPhone" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="edit-email" class="block text-sm font-medium text-gray-300">Email Contacto</label>
+                            <input type="email" id="edit-email" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="edit-status" class="block text-sm font-medium text-gray-300">Estado</label>
+                            <select id="edit-status" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none">
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="Exito">Exito</option>
+                                <option value="Seguimiento">Seguimiento</option>
+                                <option value="Descartado">Descartado</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="edit-notes" class="block text-sm font-medium text-gray-300">Notas</label>
+                            <textarea id="edit-notes" rows="3" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" id="cancel-btn" class="px-4 py-2 text-sm font-bold text-gray-300 border-2 border-gray-600 rounded-md transition hover:bg-gray-700">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-bold bg-[#01ff1d] text-[#090f0a] rounded-md transition hover:bg-opacity-80">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Adding New Fiesta -->
+    <div id="add-fiesta-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 hidden opacity-0">
+        <div class="modal-content transform -translate-y-10 bg-[#0c140d] rounded-lg shadow-2xl w-full max-w-lg mx-4 border-2 border-[#01ff1d]">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-white">Agregar Nueva Fiesta</h3>
+                    <button id="close-add-modal-btn" class="text-gray-400 hover:text-white">&times;</button>
+                </div>
+                <form id="add-fiesta-form">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="add-name" class="block text-sm font-medium text-gray-300">Nombre Fiesta</label>
+                            <input type="text" id="add-name" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="add-month" class="block text-sm font-medium text-gray-300">Mes</label>
+                            <select id="add-month" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none">
+                                <option value="" disabled selected>Seleccione un mes</option>
+                                <option value="1">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="add-location" class="block text-sm font-medium text-gray-300">Lugar</label>
+                            <input type="text" id="add-location" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="add-province" class="block text-sm font-medium text-gray-300">Provincia</label>
+                            <input type="text" id="add-province" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="add-contactName" class="block text-sm font-medium text-gray-300">Nombre Contacto</label>
+                            <input type="text" id="add-contactName" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="add-contactPhone" class="block text-sm font-medium text-gray-300">Teléfono Contacto</label>
+                            <input type="text" id="add-contactPhone" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="add-email" class="block text-sm font-medium text-gray-300">Email Contacto</label>
+                            <input type="email" id="add-email" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="add-notes" class="block text-sm font-medium text-gray-300">Notas</label>
+                            <textarea id="add-notes" rows="3" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" id="cancel-add-btn" class="px-4 py-2 text-sm font-bold text-gray-300 border-2 border-gray-600 rounded-md transition hover:bg-gray-700">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-bold bg-[#01ff1d] text-[#090f0a] rounded-md transition hover:bg-opacity-80">Agregar Fiesta</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/data.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,140 @@
+/* Base body styles */
+body {
+    font-family: 'Chivo', sans-serif; /* Ensure Chivo is the default */
+    background-color: #090f0a;
+    color: #e5e7eb; /* Tailwind gray-200, good for dark backgrounds */
+    overflow-x: hidden;
+}
+
+/* DK Laser theme subtle background pattern */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-image: repeating-linear-gradient(45deg, rgba(1, 255, 29, 0.05), rgba(1, 255, 29, 0.05) 1px, transparent 1px, transparent 15px);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Font helper class (though body should cover most) */
+.font-chivo {
+    font-family: 'Chivo', sans-serif;
+}
+
+/* DK Laser color palette helpers */
+.bg-dk-dark { background-color: #090f0a; }
+.text-dk-green { color: #01ff1d; }
+.border-dk-green { border-color: #01ff1d; }
+.hover-bg-dk-green:hover { background-color: #01ff1d; color: #090f0a !important; } /* Ensure text color changes on hover */
+.hover-border-dk-green:hover { border-color: #01ff1d; }
+
+/* Status Dots (used in table) */
+.status-dot {
+    min-height: 12px; /* increased size slightly */
+    min-width: 12px;
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+/* Naming convention matches status values for easier use in JS */
+.status-Pendiente-dot { background-color: #6b7280; } /* Gris (gray-500) */
+.status-Exito-dot { background-color: #01ff1d; }     /* Verde DK */
+.status-Seguimiento-dot { background-color: #FBBF24; } /* Amarillo (amber-400) */
+.status-Descartado-dot { background-color: #EF4444; } /* Rojo (red-500) */
+
+/* Full Row Background Colors based on Status */
+/* Using !important to ensure override of Tailwind's specificity if needed */
+.row-status-Exito { background-color: #059669 !important; color: #000000 !important; } /* Tailwind green-600, black text */
+.row-status-Exito td button { color: #000000 !important; border-color: #000000 !important; } /* Ensure button text/border is also black */
+.row-status-Exito td button:hover { background-color: #000000 !important; color: #059669 !important; } /* Hover for buttons on green row */
+
+.row-status-Seguimiento { background-color: #FBBF24 !important; color: #000000 !important; } /* Tailwind amber-400, black text */
+.row-status-Seguimiento td button { color: #000000 !important; border-color: #000000 !important; }
+.row-status-Seguimiento td button:hover { background-color: #000000 !important; color: #FBBF24 !important; }
+
+.row-status-Descartado { background-color: #DC2626 !important; color: #FFFFFF !important; } /* Tailwind red-600, white text */
+.row-status-Descartado td button { color: #FFFFFF !important; border-color: #FFFFFF !important; }
+.row-status-Descartado td button:hover { background-color: #FFFFFF !important; color: #DC2626 !important; }
+
+/* For 'Pendiente' rows, no specific background class, default styles apply. */
+/* However, ensure buttons on Pendiente rows have DK green hover */
+tr:not([class*="row-status-"]) td button.border-dk-green:hover {
+     background-color: #01ff1d !important;
+     color: #090f0a !important;
+}
+tr:not([class*="row-status-"]) td button.text-\[\#01ff1d\]:hover { /* For buttons like "Gestionar" */
+    background-color: #01ff1d !important;
+    color: #090f0a !important;
+}
+
+
+/* Modal Styling */
+.modal {
+    transition: opacity 0.25s ease;
+    background-color: rgba(0,0,0,0.85); /* Darker backdrop */
+}
+.modal-content {
+    transition: transform 0.25s ease;
+    background-color: #111827; /* Tailwind gray-900 */
+    border: 1px solid #01ff1d;
+}
+
+/* Province Headers for Table View */
+.province-header td { /* Apply to the td spanning columns */
+    font-size: 1.25em; /* Adjusted size */
+    font-weight: 700; /* Chivo Bold */
+    color: #01ff1d;   /* DK Green */
+    padding-top: 20px !important;
+    padding-bottom: 10px !important;
+    background-color: #0c140d !important; /* Match section header bg */
+    border-left: none; /* Remove left border for header */
+    border-right: none; /* Remove right border for header */
+}
+
+
+/* Custom Scrollbar DK Laser style */
+::-webkit-scrollbar {
+    width: 12px;
+    background-color: #090f0a;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #01ff1d;
+    border-radius: 10px;
+    border: 3px solid #090f0a; /* Creates padding around thumb */
+}
+::-webkit-scrollbar-track {
+    background-color: #090f0a;
+}
+/* For Firefox */
+html { /* Apply to html for better Firefox scrollbar compatibility */
+    scrollbar-width: thin;
+    scrollbar-color: #01ff1d #090f0a; /* thumb and track */
+}
+
+/* General hover effect for cards (daily tasks) */
+.task-card:hover {
+    border-color: #01ff1d;
+    box-shadow: 0 0 15px rgba(1, 255, 29, 0.5);
+}
+
+/* Ensure the close button in modals is easily clickable */
+#close-modal-btn, #close-add-modal-btn {
+    font-size: 1.5rem; /* Larger click target */
+    padding: 0.5rem; /* Add some padding */
+    line-height: 1;
+}
+
+/* General button styling for consistency if needed beyond Tailwind */
+button {
+    cursor: pointer;
+}
+
+/* Styling for the "Agregar Fiesta" button specifically if not fully covered by Tailwind */
+#add-fiesta-btn {
+    /* Example: px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-md transition hover:bg-blue-700 */
+    /* This is already in the HTML, but you can add overrides or defaults here */
+}
