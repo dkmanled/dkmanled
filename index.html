@@ -49,8 +49,10 @@
                         </h1>
                     </div>
                     <nav class="space-x-4">
-                        <button id="view-tasks-btn" class="px-4 py-2 text-sm font-bold bg-[#01ff1d] text-[#090f0a] rounded-md transition hover:bg-opacity-80">Tareas del Día</button>
-                        <button id="view-all-btn" class="px-4 py-2 text-sm font-bold text-[#01ff1d] border-2 border-[#01ff1d] rounded-md transition hover:bg-[#01ff1d] hover:text-[#090f0a]">Todas las Fiestas</button>
+                        <!-- Botón Tareas del Día eliminado temporalmente para simplificar, se puede re-añadir si es necesario -->
+                        <!-- <button id="view-tasks-btn" class="px-4 py-2 text-sm font-bold bg-[#01ff1d] text-[#090f0a] rounded-md transition hover:bg-opacity-80">Tareas del Día</button> -->
+                        <button id="view-all-btn" class="px-4 py-2 text-sm font-bold text-[#01ff1d] border-2 border-[#01ff1d] rounded-md transition hover:bg-[#01ff1d] hover:text-[#090f0a]">Ver Aniversarios</button>
+                        <button id="add-fiesta-btn" class="px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-md transition hover:bg-blue-700">Agregar Aniversario</button>
                     </nav>
                 </div>
             </div>
@@ -58,43 +60,73 @@
 
         <!-- Main Content -->
         <main class="container mx-auto p-4 sm:p-6 lg:p-8">
-            <!-- Daily Tasks View -->
-            <div id="tasks-view">
-                <h2 class="text-3xl font-bold text-white mb-6">Tareas del Día</h2>
-                <div id="tasks-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                    <!-- Daily task cards will be injected here -->
-                </div>
-            </div>
+            <!-- Vista de Aniversarios -->
+            <div id="all-festivals-view">
+                <h2 class="text-3xl font-bold text-white mb-6">Aniversarios de Localidades Argentinas</h2>
 
-            <!-- All Festivals View (hidden by default) -->
-            <div id="all-festivals-view" class="hidden">
-                <h2 class="text-3xl font-bold text-white mb-6">Base de Datos de Fiestas</h2>
-                <div class="mb-4">
-                    <input type="text" id="search-input" placeholder="Buscar por nombre, provincia o localidad..." class="w-full p-3 bg-[#0c140d] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] focus:border-[#01ff1d] outline-none">
+                <div class="filters-container flex flex-wrap gap-4 mb-6 p-4 bg-[#0c140d] rounded-lg border border-gray-700 items-end">
+                    <div class="filter-group flex-grow">
+                        <label for="search-input" class="block text-sm font-medium text-gray-300 mb-1">Buscar por Ciudad/Provincia/Info:</label>
+                        <input type="text" id="search-input" placeholder="Buscar..." class="w-full p-2 bg-[#090f0a] border border-gray-600 rounded-md focus:ring-2 focus:ring-[#01ff1d] focus:border-[#01ff1d] outline-none">
+                    </div>
+                    <div class="filter-group flex-grow">
+                        <label for="monthFilter" class="block text-sm font-medium text-gray-300 mb-1">Filtrar por Mes:</label>
+                        <select id="monthFilter" class="w-full p-2 bg-[#090f0a] border border-gray-600 rounded-md focus:ring-2 focus:ring-[#01ff1d] focus:border-[#01ff1d] outline-none">
+                            <option value="">Todos los meses</option>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="filter-group flex-grow">
+                        <label for="weekFilter" class="block text-sm font-medium text-gray-300 mb-1">Filtrar por Semana:</label>
+                        <select id="weekFilter" class="w-full p-2 bg-[#090f0a] border border-gray-600 rounded-md focus:ring-2 focus:ring-[#01ff1d] focus:border-[#01ff1d] outline-none">
+                            <option value="">Todas las semanas</option>
+                            <option value="1">Semana 1 (días 1-7)</option>
+                            <option value="2">Semana 2 (días 8-14)</option>
+                            <option value="3">Semana 3 (días 15-21)</option>
+                            <option value="4">Semana 4 (días 22-28)</option>
+                            <option value="5">Semana 5 (días 29+)</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="bg-[#0c140d] rounded-lg shadow-lg overflow-hidden">
-                    <table class="w-full text-sm text-left">
+
+                <div class="bg-[#0c140d] rounded-lg shadow-lg overflow-x-auto">
+                    <table class="w-full text-sm text-left min-w-[1200px]">
                         <thead class="text-xs text-gray-400 uppercase bg-gray-800">
                             <tr>
-                                <th scope="col" class="p-4 w-4"></th>
-                                <th scope="col" class="px-6 py-3">Nombre</th>
-                                <th scope="col" class="px-6 py-3">Mes</th>
-                                <th scope="col" class="px-6 py-3">Lugar</th>
-                                <th scope="col" class="px-6 py-3">Provincia</th>
-                                <th scope="col" class="px-6 py-3">Estado</th>
-                                <th scope="col" class="px-6 py-3">Acción</th>
+                                <th scope="col" class="px-4 py-3">Fecha</th>
+                                <th scope="col" class="px-4 py-3">Ciudad</th>
+                                <th scope="col" class="px-4 py-3">Provincia</th>
+                                <th scope="col" class="px-4 py-3">Información</th>
+                                <th scope="col" class="px-4 py-3">Contacto</th>
+                                <th scope="col" class="px-4 py-3">Teléfono</th>
+                                <th scope="col" class="px-4 py-3">Email</th>
+                                <th scope="col" class="px-4 py-3">Notas</th>
+                                <th scope="col" class="px-4 py-3">Estado</th>
+                                <th scope="col" class="px-4 py-3">Acción</th>
                             </tr>
                         </thead>
-                        <tbody id="festivals-table-body">
-                            <!-- Table rows will be injected here -->
+                        <tbody id="anniversaryTableBody" class="divide-y divide-gray-700">
+                            <!-- Las filas se generarán aquí por JavaScript -->
                         </tbody>
                     </table>
                 </div>
+                <p id="no-results-message" class="text-center p-5 text-gray-500 hidden">No se encontraron aniversarios con los filtros seleccionados.</p>
             </div>
         </main>
     </div>
 
-    <!-- Modal for Editing -->
+    <!-- Modal for Editing Anniversaries -->
     <div id="edit-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 hidden opacity-0">
         <div class="modal-content transform -translate-y-10 bg-[#0c140d] rounded-lg shadow-2xl w-full max-w-lg mx-4 border-2 border-[#01ff1d]">
             <div class="p-6">
@@ -102,29 +134,47 @@
                 <form id="edit-form">
                     <input type="hidden" id="edit-id">
 
-                    <!-- Campos no editables -->
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-400">Nombre Fiesta</label>
-                        <p id="modal-readonly-name" class="mt-1 text-white"></p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4 mb-3">
+                    <!-- Campos de Aniversario Editables -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
                         <div>
-                            <label class="block text-sm font-medium text-gray-400">Mes</label>
-                            <p id="modal-readonly-month" class="mt-1 text-white"></p>
+                            <label for="edit-day" class="block text-sm font-medium text-gray-300">Día</label>
+                            <input type="number" id="edit-day" min="1" max="31" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-400">Lugar</label>
-                            <p id="modal-readonly-location" class="mt-1 text-white"></p>
+                            <label for="edit-month" class="block text-sm font-medium text-gray-300">Mes</label>
+                            <select id="edit-month" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none">
+                                <option value="1">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label class="block text-sm font-medium text-gray-400">Provincia</label>
-                        <p id="modal-readonly-province" class="mt-1 text-white"></p>
+                        <label for="edit-city" class="block text-sm font-medium text-gray-300">Ciudad</label>
+                        <input type="text" id="edit-city" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
                     </div>
-                    <hr class="border-gray-700 my-4">
+                    <div class="mb-3">
+                        <label for="edit-province" class="block text-sm font-medium text-gray-300">Provincia</label>
+                        <input type="text" id="edit-province" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                    </div>
+                     <div class="mb-3">
+                        <label for="edit-info" class="block text-sm font-medium text-gray-300">Información Adicional</label>
+                        <textarea id="edit-info" rows="2" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500"></textarea>
+                    </div>
 
-                    <!-- Campos editables -->
-                    <div class="space-y-4">
+                    <hr class="border-gray-700 my-4">
+                    <h4 class="text-lg font-semibold text-white mb-2">Datos de Contacto</h4>
+                    <!-- Campos de Contacto Editables -->
+                    <div class="space-y-3"> <!-- Reducido el space-y para más compacidad -->
                         <div>
                             <label for="edit-contactName" class="block text-sm font-medium text-gray-300">Nombre Contacto</label>
                             <input type="text" id="edit-contactName" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
@@ -160,7 +210,91 @@
         </div>
     </div>
 
-    <script src="./data.js"></script>
-    <script src="./app.js"></script>
+    <!-- Modal for Adding New Fiesta -->
+    <div id="add-fiesta-modal" class="modal fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 hidden opacity-0">
+        <div class="modal-content transform -translate-y-10 bg-[#0c140d] rounded-lg shadow-2xl w-full max-w-lg mx-4 border-2 border-[#01ff1d]">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-2xl font-bold text-white">Agregar Nuevo Aniversario</h3>
+                    <button id="close-add-modal-btn" class="text-gray-400 hover:text-white text-3xl leading-none">&times;</button>
+                </div>
+                <form id="add-fiesta-form">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <label for="add-day" class="block text-sm font-medium text-gray-300">Día</label>
+                            <input type="number" id="add-day" min="1" max="31" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="add-month" class="block text-sm font-medium text-gray-300">Mes</label>
+                            <select id="add-month" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none">
+                                <option value="" disabled selected>Seleccione mes</option>
+                                <option value="1">Enero</option>
+                                <option value="2">Febrero</option>
+                                <option value="3">Marzo</option>
+                                <option value="4">Abril</option>
+                                <option value="5">Mayo</option>
+                                <option value="6">Junio</option>
+                                <option value="7">Julio</option>
+                                <option value="8">Agosto</option>
+                                <option value="9">Septiembre</option>
+                                <option value="10">Octubre</option>
+                                <option value="11">Noviembre</option>
+                                <option value="12">Diciembre</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-city" class="block text-sm font-medium text-gray-300">Ciudad</label>
+                        <input type="text" id="add-city" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-province" class="block text-sm font-medium text-gray-300">Provincia</label>
+                        <input type="text" id="add-province" required class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                    </div>
+                    <div class="mb-3">
+                        <label for="add-info" class="block text-sm font-medium text-gray-300">Información Adicional</label>
+                        <textarea id="add-info" rows="2" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500"></textarea>
+                    </div>
+                    <hr class="border-gray-700 my-4">
+                    <h4 class="text-lg font-semibold text-white mb-2">Datos de Contacto (Opcional)</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label for="add-contactName" class="block text-sm font-medium text-gray-300">Nombre Contacto</label>
+                            <input type="text" id="add-contactName" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="add-contactPhone" class="block text-sm font-medium text-gray-300">Teléfono Contacto</label>
+                            <input type="text" id="add-contactPhone" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                        <div>
+                            <label for="add-email" class="block text-sm font-medium text-gray-300">Email Contacto</label>
+                            <input type="email" id="add-email" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500">
+                        </div>
+                         <div>
+                            <label for="add-status" class="block text-sm font-medium text-gray-300">Estado</label>
+                            <select id="add-status" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none">
+                                <option value="Pendiente" selected>Pendiente</option>
+                                <option value="Exito">Exito</option>
+                                <option value="Seguimiento">Seguimiento</option>
+                                <option value="Descartado">Descartado</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="add-notes" class="block text-sm font-medium text-gray-300">Notas</label>
+                            <textarea id="add-notes" rows="3" class="mt-1 w-full p-2 bg-[#090f0a] border border-gray-700 rounded-md focus:ring-2 focus:ring-[#01ff1d] outline-none placeholder-gray-500"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex justify-end space-x-3">
+                        <button type="button" id="cancel-add-btn" class="px-4 py-2 text-sm font-bold text-gray-300 border-2 border-gray-600 rounded-md transition hover:bg-gray-700">Cancelar</button>
+                        <button type="submit" class="px-4 py-2 text-sm font-bold bg-[#01ff1d] text-[#090f0a] rounded-md transition hover:bg-opacity-80">Agregar Aniversario</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="static/css/style.css">
+    <script src="static/js/data.js" defer></script>
+    <script src="static/js/app.js" defer></script>
 </body>
 </html>

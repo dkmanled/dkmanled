@@ -1,359 +1,308 @@
-// app.js
-// Contiene la lógica principal para la aplicación DK Fest Tracker.
-
 document.addEventListener('DOMContentLoaded', () => {
-    // Estado global de la aplicación
-    const AppState = {
-        festivals: [],
-        dailyTasks: [],
-        currentView: 'tasks'
-    };
+    const monthSelect = document.getElementById('monthFilter');
+    const weekSelect = document.getElementById('weekFilter');
+    const searchInput = document.getElementById('searchInput'); // Corregido el ID
+    const tableBody = document.getElementById('anniversaryTableBody');
+    const noResultsMessage = document.getElementById('no-results-message');
 
-    // --- Selección de Elementos del DOM ---
-    const tasksView = document.getElementById('tasks-view');
-    const allFestivalsView = document.getElementById('all-festivals-view');
-    const viewTasksBtn = document.getElementById('view-tasks-btn');
-    const viewAllBtn = document.getElementById('view-all-btn');
-    const addFiestaBtn = document.getElementById('add-fiesta-btn');
-    const tasksGrid = document.getElementById('tasks-grid');
-    const festivalsTableBody = document.getElementById('festivals-table-body');
-    const searchInput = document.getElementById('search-input');
+    // Asegurarse de que anniversariesData está disponible globalmente
+    let localAnniversaries = window.anniversariesData || [];
 
-    // Modal de Edición
-    const modal = document.getElementById('edit-modal');
-    const modalReadOnlyName = document.getElementById('modal-readonly-name');
-    const modalReadOnlyMonth = document.getElementById('modal-readonly-month');
-    const modalReadOnlyLocation = document.getElementById('modal-readonly-location');
-    const modalReadOnlyProvince = document.getElementById('modal-readonly-province');
+    // Para el modal de edición (se completará más adelante)
+    const editModal = document.getElementById('edit-modal');
+    const modalTitle = document.getElementById('modal-title');
     const editForm = document.getElementById('edit-form');
     const cancelBtn = document.getElementById('cancel-btn');
-    const closeModalButton = document.getElementById('close-modal-btn');
-    const editId = document.getElementById('edit-id');
-    const editContactName = document.getElementById('edit-contactName');
-    const editContactPhone = document.getElementById('edit-contactPhone');
-    const editEmail = document.getElementById('edit-email');
-    const editStatus = document.getElementById('edit-status');
-    const editNotes = document.getElementById('edit-notes');
+    const closeModalBtn = document.getElementById('close-modal-btn'); // Asumiendo que este es el ID del botón de cerrar en el modal de edición
 
-    // Modal de Agregar Fiesta
+    // Para el modal de agregar (se completará más adelante)
+    const addFiestaBtn = document.getElementById('add-fiesta-btn');
     const addFiestaModal = document.getElementById('add-fiesta-modal');
     const addFiestaForm = document.getElementById('add-fiesta-form');
     const cancelAddBtn = document.getElementById('cancel-add-btn');
-    const closeAddModalButton = document.getElementById('close-add-modal-btn');
-    const addName = document.getElementById('add-name');
-    const addMonth = document.getElementById('add-month');
-    const addLocation = document.getElementById('add-location');
-    const addProvince = document.getElementById('add-province');
-    const addContactNameInput = document.getElementById('add-contactName'); // Renombrado para evitar conflicto
-    const addContactPhoneInput = document.getElementById('add-contactPhone'); // Renombrado
-    const addEmailInput = document.getElementById('add-email'); // ID 'add-email' en el modal de agregar, renombrado
-    const addNotesInput = document.getElementById('add-notes'); // Renombrado
+    const closeAddModalBtn = document.getElementById('close-add-modal-btn');
 
-    const FULL_MONTH_NAMES = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-    // --- MANEJO DE DATOS ---
-    async function loadData() {
-        console.log("DK Fest Tracker: Cargando datos desde /api/festivals...");
-        try {
-            const response = await fetch('/api/festivals');
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            AppState.festivals = await response.json();
-            console.log(`DK Fest Tracker: ${AppState.festivals.length} festivales cargados.`);
-            generateDailyTasks();
-            render();
-        } catch (error) {
-            console.error("DK Fest Tracker: Error cargando festivales desde backend:", error);
-            // Fallback a initialFestivals de data.js si está disponible
-            if (typeof initialFestivals !== 'undefined' && Array.isArray(initialFestivals)) {
-                 console.warn("DK Fest Tracker: Backend falló. Cargando desde initialFestivals (data.js).");
-                 AppState.festivals = initialFestivals.map(f => ({...f})); // Copia profunda
-                 generateDailyTasks();
-                 render();
-            } else {
-                tasksGrid.innerHTML = `<p class="text-gray-400 col-span-full text-center py-10">Error al cargar datos del servidor. Intenta recargar.</p>`;
-                festivalsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-400">Error al cargar datos.</td></tr>`;
-            }
+    function formatDate(day, month) {
+        const formattedDay = String(day).padStart(2, '0');
+        const formattedMonth = String(month).padStart(2, '0');
+        return `${formattedDay}/${formattedMonth}`;
+    }
+
+    function getStatusClass(status) {
+        switch (status) {
+            case 'Exito': return 'bg-green-500';
+            case 'Seguimiento': return 'bg-yellow-400';
+            case 'Descartado': return 'bg-red-500';
+            case 'Pendiente':
+            default:
+                return 'bg-gray-500';
         }
     }
 
-    function getFestivalById(id) {
-        return AppState.festivals.find(festival => festival.id === id);
-    }
+    function renderTable(dataToDisplay) {
+        tableBody.innerHTML = ''; // Limpiar tabla
 
-    async function updateFestivalInBackend(updatedFestivalData) {
-        console.log("DK Fest Tracker: Actualizando festival ID:", updatedFestivalData.id, "en backend.");
-        try {
-            const response = await fetch(`/api/festivals/${updatedFestivalData.id}`, {
-                method: 'PUT',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(updatedFestivalData),
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`HTTP error! status: ${response.status}, msg: ${errorData.error}`);
-            }
-            const returnedFestival = await response.json();
-
-            const index = AppState.festivals.findIndex(f => f.id === returnedFestival.id);
-            if (index !== -1) AppState.festivals[index] = returnedFestival;
-
-            const dailyTaskIndex = AppState.dailyTasks.findIndex(t => t && t.id === returnedFestival.id);
-            if (dailyTaskIndex !== -1) {
-                 AppState.dailyTasks[dailyTaskIndex] = returnedFestival;
-                 localStorage.setItem('dkDailyTasks', JSON.stringify({
-                    date: new Date().toDateString(),
-                    tasks: AppState.dailyTasks.map(task => ({id: task.id, name: task.name, status: task.status})) // Guardar subconjunto
-                }));
-            }
-            console.log("DK Fest Tracker: Festival actualizado OK en AppState y backend.");
-            return true;
-        } catch (error) {
-            console.error("DK Fest Tracker: Error actualizando festival en backend:", error);
-            alert(`Error al guardar: ${error.message}`);
-            return false;
-        }
-    }
-
-    async function addFiestaToBackend(newFiestaData) {
-        console.log("DK Fest Tracker: Agregando nueva fiesta a backend:", newFiestaData);
-        try {
-            const response = await fetch('/api/festivals', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(newFiestaData),
-            });
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(`HTTP error! status: ${response.status}, msg: ${errorData.error}`);
-            }
-            const createdFestival = await response.json();
-            AppState.festivals.push(createdFestival);
-            console.log("DK Fest Tracker: Nueva fiesta agregada OK a AppState y backend.");
-            return createdFestival;
-        } catch (error) {
-            console.error("DK Fest Tracker: Error agregando nueva fiesta a backend:", error);
-            alert(`Error al agregar: ${error.message}`);
-            return null;
-        }
-    }
-
-    function generateDailyTasks() {
-        console.log("DK Fest Tracker: Verificando/Generando tareas diarias...");
-        const storedTasksData = JSON.parse(localStorage.getItem('dkDailyTasks'));
-        const todayString = new Date().toDateString();
-
-        if (storedTasksData && storedTasksData.date === todayString && Array.isArray(storedTasksData.tasks)) {
-            console.log("DK Fest Tracker: Cargando tareas diarias desde localStorage.");
-            AppState.dailyTasks = storedTasksData.tasks
-                .map(taskStub => AppState.festivals.find(f => f.id === taskStub.id)) // Obtener objeto completo
-                .filter(Boolean); // Filtrar nulos si alguna tarea no se encontró
+        if (dataToDisplay.length === 0) {
+            noResultsMessage.classList.remove('hidden');
+            tableBody.innerHTML = ''; // Asegurar que la tabla esté vacía
         } else {
-            generateNewDailyTasks();
+            noResultsMessage.classList.add('hidden');
+            dataToDisplay.forEach((ann, index) => { // Añadir index para usar como ID temporal si no hay IDs únicos
+                const row = tableBody.insertRow();
+                row.className = 'hover:bg-gray-700 transition-colors duration-150 ease-in-out';
+
+                // Aplicar clases de estado para resaltado de fila
+                if (ann.status === 'Exito') {
+                    row.classList.add('row-status-Exito');
+                } else if (ann.status === 'Seguimiento') {
+                    row.classList.add('row-status-Seguimiento');
+                } else if (ann.status === 'Descartado') {
+                    row.classList.add('row-status-Descartado');
+                }
+                // Para 'Pendiente', no se añade clase de fondo específica, usará el default.
+
+
+                row.insertCell().textContent = formatDate(ann.day, ann.month);
+                row.cells[0].className = 'px-4 py-2 text-center';
+
+                row.insertCell().textContent = ann.city;
+                row.cells[1].className = 'px-4 py-2';
+
+                row.insertCell().textContent = ann.province;
+                row.cells[2].className = 'px-4 py-2';
+
+                row.insertCell().textContent = ann.info || '-';
+                row.cells[3].className = 'px-4 py-2 max-w-xs truncate';
+
+                row.insertCell().textContent = ann.contactName || '-';
+                row.cells[4].className = 'px-4 py-2';
+
+                row.insertCell().textContent = ann.contactPhone || '-';
+                row.cells[5].className = 'px-4 py-2';
+
+                row.insertCell().textContent = ann.email || '-';
+                row.cells[6].className = 'px-4 py-2';
+
+                row.insertCell().textContent = ann.notes || '-';
+                row.cells[7].className = 'px-4 py-2 max-w-xs truncate';
+
+                const statusCell = row.insertCell();
+                statusCell.className = 'px-4 py-2 text-center';
+                const statusDot = document.createElement('div');
+                statusDot.className = `status-dot ${getStatusClass(ann.status)} mx-auto`;
+                statusDot.title = ann.status;
+                statusCell.appendChild(statusDot);
+
+                const actionCell = row.insertCell();
+                actionCell.className = 'px-4 py-2 text-center';
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Editar';
+                editButton.className = 'px-3 py-1 text-sm font-bold bg-blue-600 text-white rounded-md transition hover:bg-blue-700';
+                editButton.dataset.id = ann.id || index; // Usar ID si existe, sino index
+                editButton.addEventListener('click', () => openEditModal(ann.id || index));
+                actionCell.appendChild(editButton);
+            });
         }
     }
 
-    function generateNewDailyTasks() {
-        console.log("DK Fest Tracker: Generando NUEVAS tareas diarias...");
-        const now = new Date();
-        const currentMonth = now.getMonth(); // 0-11
-        const currentYear = now.getFullYear();
+    function filterAnniversaries() {
+        const selectedMonthValue = monthSelect.value;
+        const selectedWeekValue = weekSelect.value;
+        const searchTerm = searchInput.value.toLowerCase();
 
-        const potentialTasks = AppState.festivals.filter(f => {
-            if (f.status !== 'Pendiente') return false;
-            const festivalMonth = parseInt(f.month, 10) - 1;
-            let targetMonthFuture = (currentMonth + 4) % 12;
-            let targetYearFuture = currentYear;
-            if (currentMonth + 4 >= 12) targetYearFuture++;
+        let filteredResults = localAnniversaries;
 
-            return festivalMonth === targetMonthFuture && (!f.year || parseInt(f.year, 10) === targetYearFuture);
-        });
-
-        console.log(`DK Fest Tracker: ${potentialTasks.length} tareas potenciales para 4 meses en el futuro.`);
-        AppState.dailyTasks = potentialTasks.sort(() => 0.5 - Math.random()).slice(0, 10);
-        console.log(`DK Fest Tracker: ${AppState.dailyTasks.length} tareas diarias seleccionadas.`);
-
-        localStorage.setItem('dkDailyTasks', JSON.stringify({
-            date: new Date().toDateString(),
-            tasks: AppState.dailyTasks.map(task => ({id: task.id, name: task.name, status: task.status})) // Guardar solo un subconjunto
-        }));
-        console.log("DK Fest Tracker: Nuevas tareas diarias guardadas en localStorage.");
-    }
-
-    // --- RENDERIZACIÓN ---
-    function render() {
-        if (AppState.currentView === 'tasks') {
-            tasksView.classList.remove('hidden');
-            allFestivalsView.classList.add('hidden');
-            viewTasksBtn.classList.add('bg-[#01ff1d]', 'text-[#090f0a]');
-            viewTasksBtn.classList.remove('text-[#01ff1d]', 'border-2', 'border-[#01ff1d]');
-            viewAllBtn.classList.add('text-[#01ff1d]', 'border-2', 'border-[#01ff1d]');
-            viewAllBtn.classList.remove('bg-[#01ff1d]', 'text-[#090f0a]');
-            renderTasks();
-        } else {
-            tasksView.classList.add('hidden');
-            allFestivalsView.classList.remove('hidden');
-            viewAllBtn.classList.add('bg-[#01ff1d]', 'text-[#090f0a]');
-            viewAllBtn.classList.remove('text-[#01ff1d]', 'border-2', 'border-[#01ff1d]');
-            viewTasksBtn.classList.add('text-[#01ff1d]', 'border-2', 'border-[#01ff1d]');
-            viewTasksBtn.classList.remove('bg-[#01ff1d]', 'text-[#090f0a]');
-            renderAllFestivals(searchInput.value);
+        if (selectedMonthValue) {
+            const monthNum = parseInt(selectedMonthValue);
+            filteredResults = filteredResults.filter(ann => ann.month === monthNum);
         }
+
+        if (selectedWeekValue) {
+            const weekNum = parseInt(selectedWeekValue);
+            filteredResults = filteredResults.filter(ann => {
+                const day = ann.day;
+                switch (weekNum) {
+                    case 1: return day >= 1 && day <= 7;
+                    case 2: return day >= 8 && day <= 14;
+                    case 3: return day >= 15 && day <= 21;
+                    case 4: return day >= 22 && day <= 28;
+                    case 5: return day >= 29;
+                    default: return true;
+                }
+            });
+        }
+
+        if (searchTerm) {
+            filteredResults = filteredResults.filter(ann =>
+                ann.city.toLowerCase().includes(searchTerm) ||
+                ann.province.toLowerCase().includes(searchTerm) ||
+                ann.info.toLowerCase().includes(searchTerm) ||
+                (ann.contactName && ann.contactName.toLowerCase().includes(searchTerm)) ||
+                (ann.notes && ann.notes.toLowerCase().includes(searchTerm))
+            );
+        }
+        renderTable(filteredResults);
     }
 
-    function renderTasks() {
-        tasksGrid.innerHTML = AppState.dailyTasks.length === 0 ?
-            `<p class="text-gray-400 col-span-full text-center py-10">No hay tareas sugeridas (Pendientes a 4 meses).<br>Agrega fiestas o revisa "Todas las Fiestas".</p>` :
-            AppState.dailyTasks.map(festival => festival ? `
-                <div class="task-card bg-[#0c140d] p-4 rounded-lg shadow-md border border-gray-800 flex flex-col justify-between">
-                    <div>
-                        <h3 class="font-bold text-lg text-white truncate mb-1" title="${festival.name}">${festival.name}</h3>
-                        <p class="text-sm text-gray-400 mb-0.5">${festival.location}</p>
-                        <p class="text-sm text-gray-500 mb-0.5">${festival.province}</p>
-                        <p class="text-xs text-gray-500 mt-1">Mes: ${FULL_MONTH_NAMES[festival.month]}</p>
-                    </div>
-                    <button data-id="${festival.id}" class="manage-btn mt-3 w-full px-3 py-2 text-sm font-bold bg-[#01ff1d] text-[#090f0a] rounded-md">Gestionar</button>
-                </div>` : '').join('');
-    }
+    // --- Lógica para Modales (a completar) ---
 
-    function renderAllFestivals(filter = '') {
-        const lowerFilter = filter.toLowerCase().trim();
-        const filtered = AppState.festivals.filter(f =>
-            Object.values(f).some(val => String(val).toLowerCase().includes(lowerFilter)) ||
-            (f.month && FULL_MONTH_NAMES[f.month] && FULL_MONTH_NAMES[f.month].toLowerCase().includes(lowerFilter))
-        );
+    // Open Edit Modal
+    function openEditModal(anniversaryIdOrIndex) {
+        const isUsingIndex = typeof anniversaryIdOrIndex === 'number' && !localAnniversaries.find(a => a.id === anniversaryIdOrIndex);
+        const anniversary = isUsingIndex
+            ? localAnniversaries[anniversaryIdOrIndex]
+            : localAnniversaries.find(a => a.id === anniversaryIdOrIndex);
 
-        if (filtered.length === 0) {
-            festivalsTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-10 text-gray-400">No se encontraron fiestas.</td></tr>`;
+        if (!anniversary) {
+            console.error("Aniversario no encontrado:", anniversaryIdOrIndex);
             return;
         }
 
-        const grouped = filtered.reduce((acc, f) => {
-            (acc[f.province || "Sin Provincia"] = acc[f.province || "Sin Provincia"] || []).push(f);
-            return acc;
-        }, {});
+        // Poblar campos no editables (o que se editan de forma especial)
+        document.getElementById('modal-readonly-name').textContent = anniversary.city; // Usamos 'city' como nombre principal aquí
+        document.getElementById('modal-readonly-month').textContent = new Date(2000, anniversary.month - 1, 1).toLocaleString('es-ES', { month: 'long' });
+        document.getElementById('modal-readonly-location').textContent = anniversary.city; // Repetido, podría ser 'info' o algo más si se desea
+        document.getElementById('modal-readonly-province').textContent = anniversary.province;
 
-        festivalsTableBody.innerHTML = Object.keys(grouped).sort().map(provinceName => {
-            const provinceFestivalsHtml = grouped[provinceName]
-                .sort((a, b) => (parseInt(a.month, 10) - parseInt(b.month, 10)) || a.name.localeCompare(b.name))
-                .map(f => {
-                    const statusClass = f.status ? f.status.replace(/\s+/g, '-') : 'Pendiente';
-                    const rowStatusClass = f.status ? `row-status-${statusClass}` : '';
-                    return `
-                        <tr class="bg-[#0c140d] border-b border-gray-800 hover:bg-gray-800/60 ${rowStatusClass}">
-                            <td class="p-4"><div class="status-dot status-${statusClass}-dot" title="${f.status}"></div></td>
-                            <th scope="row" class="px-6 py-4 font-medium text-white">${f.name}</th>
-                            <td class="px-6 py-4 text-gray-300">${FULL_MONTH_NAMES[f.month]}</td>
-                            <td class="px-6 py-4 text-gray-300">${f.location}</td>
-                            <td class="px-6 py-4 text-gray-300">${f.province}</td>
-                            <td class="px-6 py-4 text-gray-300">${f.status}</td>
-                            <td class="px-6 py-4"><button data-id="${f.id}" class="manage-btn font-medium text-[#01ff1d] hover:underline">Gestionar</button></td>
-                        </tr>`;
-                }).join('');
-            return `<tr class="province-header"><td colspan="7">${provinceName}</td></tr>${provinceFestivalsHtml}`;
-        }).join('');
+        // Poblar campos editables del formulario
+        document.getElementById('edit-id').value = anniversary.id || anniversaryIdOrIndex; // Guardar el ID o índice
+        // Para editar fechas, necesitamos campos específicos en el modal
+        // Asumiremos que el modal de edición tendrá campos: edit-day, edit-month
+        const editDayInput = document.getElementById('edit-day'); // Necesitas añadir este input al modal HTML
+        const editMonthSelect = document.getElementById('edit-month'); // Necesitas añadir este select al modal HTML
+
+        if(editDayInput) editDayInput.value = anniversary.day;
+        if(editMonthSelect) editMonthSelect.value = anniversary.month;
+
+        document.getElementById('edit-city').value = anniversary.city; // Añadir input edit-city al modal
+        document.getElementById('edit-province').value = anniversary.province; // Añadir input edit-province al modal
+        document.getElementById('edit-info').value = anniversary.info; // Añadir textarea edit-info al modal
+
+        document.getElementById('edit-contactName').value = anniversary.contactName || "";
+        document.getElementById('edit-contactPhone').value = anniversary.contactPhone || "";
+        document.getElementById('edit-email').value = anniversary.email || "";
+        document.getElementById('edit-status').value = anniversary.status || "Pendiente";
+        document.getElementById('edit-notes').value = anniversary.notes || "";
+
+        modalTitle.textContent = `Gestionar Aniversario: ${anniversary.city}`;
+        editModal.classList.remove('hidden', 'opacity-0');
+        editModal.querySelector('.modal-content').classList.remove('-translate-y-10');
     }
 
-    // --- MODALES ---
-    function openEditModal(id) {
-        const f = getFestivalById(id);
-        if (!f) return;
-        modalReadOnlyName.textContent = f.name;
-        modalReadOnlyMonth.textContent = FULL_MONTH_NAMES[f.month] || 'N/A';
-        modalReadOnlyLocation.textContent = f.location;
-        modalReadOnlyProvince.textContent = f.province;
-        editId.value = f.id;
-        editContactName.value = f.contactName || '';
-        editContactPhone.value = f.contactPhone || '';
-        editEmail.value = f.email || '';
-        editStatus.value = f.status;
-        editNotes.value = f.notes || '';
-        modal.classList.remove('hidden', 'opacity-0');
-        setTimeout(() => modal.querySelector('.modal-content').classList.remove('-translate-y-10'), 10);
-    }
-
+    // Close Edit Modal
     function closeEditModal() {
-        modal.classList.add('opacity-0');
-        modal.querySelector('.modal-content').classList.add('-translate-y-10');
-        setTimeout(() => { modal.classList.add('hidden'); editForm.reset(); editId.value = ''; }, 250);
+        editForm.reset();
+        editModal.classList.add('opacity-0');
+        editModal.querySelector('.modal-content').classList.add('-translate-y-10');
+        setTimeout(() => {
+            editModal.classList.add('hidden');
+        }, 250);
     }
+    if(closeModalBtn) closeModalBtn.addEventListener('click', closeEditModal);
+    if(cancelBtn) cancelBtn.addEventListener('click', closeEditModal);
 
-    function openAddModal() {
-        addFiestaForm.reset();
-        addFiestaModal.classList.remove('hidden', 'opacity-0');
-        setTimeout(() => addFiestaModal.querySelector('.modal-content').classList.remove('-translate-y-10'), 10);
-    }
+    // Handle Edit Form Submission
+    editForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const idValue = document.getElementById('edit-id').value;
+        // Determinar si el ID es un número (índice) o un ID real si los datos tuvieran IDs únicos.
+        // Para este caso, asumimos que si es un número podría ser un índice si no se encuentra un ID.
+        let annIndex = localAnniversaries.findIndex(a => (a.id && a.id.toString() === idValue) || (a.id === undefined && localAnniversaries.indexOf(a).toString() === idValue) );
 
+        if (annIndex === -1 && !isNaN(parseInt(idValue))) { // Si no se encontró por ID pero idValue es un número, probar como índice
+             const potentialIndex = parseInt(idValue);
+             if (potentialIndex >= 0 && potentialIndex < localAnniversaries.length) {
+                 // Si el objeto en ese índice no tiene ID o su ID no coincide, se asume que es el índice.
+                 if (localAnniversaries[potentialIndex].id === undefined || localAnniversaries[potentialIndex].id.toString() !== idValue ) {
+                    // Esta lógica es compleja si los IDs no son consistentes. Simplificamos:
+                    // Si el idValue es numérico y no hay `a.id` que coincida, intentamos usarlo como índice si es válido
+                 }
+             }
+        }
+         // Re-simplificando la búsqueda del índice:
+        const originalId = idValue; // Puede ser el ID real o el índice original pasado a openEditModal
+        annIndex = localAnniversaries.findIndex((ann, idx) => (ann.id && ann.id.toString() === originalId) || idx.toString() === originalId);
+
+
+        if (annIndex !== -1) {
+            const dayInput = document.getElementById('edit-day');
+            const monthInput = document.getElementById('edit-month');
+            const cityInput = document.getElementById('edit-city');
+            const provinceInput = document.getElementById('edit-province');
+            const infoInput = document.getElementById('edit-info');
+
+
+            localAnniversaries[annIndex].day = dayInput ? parseInt(dayInput.value) : localAnniversaries[annIndex].day;
+            localAnniversaries[annIndex].month = monthInput ? parseInt(monthInput.value) : localAnniversaries[annIndex].month;
+            localAnniversaries[annIndex].city = cityInput ? cityInput.value : localAnniversaries[annIndex].city;
+            localAnniversaries[annIndex].province = provinceInput ? provinceInput.value : localAnniversaries[annIndex].province;
+            localAnniversaries[annIndex].info = infoInput ? infoInput.value : localAnniversaries[annIndex].info;
+
+            localAnniversaries[annIndex].contactName = document.getElementById('edit-contactName').value;
+            localAnniversaries[annIndex].contactPhone = document.getElementById('edit-contactPhone').value;
+            localAnniversaries[annIndex].email = document.getElementById('edit-email').value;
+            localAnniversaries[annIndex].status = document.getElementById('edit-status').value;
+            localAnniversaries[annIndex].notes = document.getElementById('edit-notes').value;
+
+            // Si no tenía ID, se le asigna uno nuevo (esto puede pasar si se editó un elemento que fue añadido sin ID explícito)
+            if (!localAnniversaries[annIndex].id) {
+                localAnniversaries[annIndex].id = localAnniversaries.length > 0 ? Math.max(...localAnniversaries.filter(a=>a.id).map(a => a.id)) + 1 : 1;
+            }
+
+            filterAnniversaries(); // Re-renderizar
+            closeEditModal();
+        } else {
+            console.error("No se pudo guardar el aniversario. ID/Índice no encontrado:", idValue);
+        }
+    });
+
+    // Open Add Modal
+    addFiestaBtn.addEventListener('click', () => {
+        addFiestaModal.classList.remove('hidden');
+        addFiestaModal.classList.remove('opacity-0');
+        addFiestaModal.querySelector('.modal-content').classList.remove('-translate-y-10');
+    });
+
+    // Close Add Modal
     function closeAddModal() {
+        addFiestaForm.reset();
         addFiestaModal.classList.add('opacity-0');
         addFiestaModal.querySelector('.modal-content').classList.add('-translate-y-10');
-        setTimeout(() => { addFiestaModal.classList.add('hidden'); addFiestaForm.reset(); }, 250);
+        setTimeout(() => {
+            addFiestaModal.classList.add('hidden');
+        }, 250); // Coincidir con la duración de la transición
     }
+    closeAddModalBtn.addEventListener('click', closeAddModal);
+    cancelAddBtn.addEventListener('click', closeAddModal);
 
-    // --- EVENT LISTENERS ---
-    function setupEventListeners() {
-        viewTasksBtn.addEventListener('click', () => { AppState.currentView = 'tasks'; render(); });
-        viewAllBtn.addEventListener('click', () => { AppState.currentView = 'all'; render(); });
-        addFiestaBtn.addEventListener('click', openAddModal);
-        searchInput.addEventListener('input', e => { if (AppState.currentView === 'all') renderAllFestivals(e.target.value); });
-        document.body.addEventListener('click', e => {
-            if (e.target.closest('.manage-btn')) openEditModal(parseInt(e.target.closest('.manage-btn').dataset.id));
-        });
+    // Handle Add Fiesta Form Submission
+    addFiestaForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const newAnniversary = {
+            day: parseInt(document.getElementById('add-day').value),
+            month: parseInt(document.getElementById('add-month').value),
+            city: document.getElementById('add-city').value,
+            province: document.getElementById('add-province').value,
+            info: document.getElementById('add-info').value,
+            contactName: document.getElementById('add-contactName').value,
+            contactPhone: document.getElementById('add-contactPhone').value,
+            email: document.getElementById('add-email').value,
+            status: document.getElementById('add-status').value,
+            notes: document.getElementById('add-notes').value,
+            id: localAnniversaries.length > 0 ? Math.max(...localAnniversaries.map(a => a.id || 0)) + 1 : 1 // Generar nuevo ID
+        };
+        localAnniversaries.push(newAnniversary);
+        // Aquí podrías llamar a una función para guardar los datos si tuvieras persistencia
+        filterAnniversaries(); // Re-renderizar la tabla
+        closeAddModal();
+    });
 
-        // Edit Modal
-        cancelBtn.addEventListener('click', closeEditModal);
-        closeModalButton.addEventListener('click', closeEditModal);
-        modal.addEventListener('click', e => { if (e.target === modal) closeEditModal(); });
-        editForm.addEventListener('submit', async e => {
-            e.preventDefault();
-            const id = parseInt(editId.value);
-            if (isNaN(id)) return;
-            const success = await updateFestivalInBackend({
-                id,
-                contactName: editContactName.value.trim(),
-                contactPhone: editContactPhone.value.trim(),
-                email: editEmail.value.trim(),
-                status: editStatus.value,
-                notes: editNotes.value.trim(),
-            });
-            if (success) { closeEditModal(); render(); }
-        });
+    // --- Event Listeners para filtros ---
+    monthSelect.addEventListener('change', filterAnniversaries);
+    weekSelect.addEventListener('change', filterAnniversaries);
+    searchInput.addEventListener('input', filterAnniversaries);
 
-        // Add Modal
-        cancelAddBtn.addEventListener('click', closeAddModal);
-        closeAddModalButton.addEventListener('click', closeAddModal);
-        addFiestaModal.addEventListener('click', e => { if (e.target === addFiestaModal) closeAddModal(); });
-        addFiestaForm.addEventListener('submit', async e => {
-            e.preventDefault();
-            const data = {
-                name: addName.value.trim(),
-                month: parseInt(addMonth.value),
-                location: addLocation.value.trim(),
-                province: addProvince.value.trim(),
-                contactName: addContactNameInput.value.trim(),
-                contactPhone: addContactPhoneInput.value.trim(),
-                email: addEmailInput.value.trim(), // Corregido para usar la variable correcta del input de email del modal de agregar
-                notes: addNotesInput.value.trim(),
-                // status se establece en backend
-            };
-            if (!data.name || !data.month || !data.location || !data.province) {
-                alert("Nombre, Mes, Lugar y Provincia son obligatorios."); return;
-            }
-            const created = await addFiestaToBackend(data);
-            if (created) { closeAddModal(); AppState.currentView = 'all'; loadData(); /* Recarga y renderiza todo */ }
-        });
-    }
-
-    // --- INICIALIZACIÓN ---
-    async function initApp() {
-        console.log("DK Fest Tracker: Inicializando...");
-        const criticalElements = [tasksView, allFestivalsView, viewTasksBtn, viewAllBtn, addFiestaBtn, tasksGrid, festivalsTableBody, searchInput, modal, editForm, addFiestaModal, addFiestaForm];
-        if (criticalElements.some(el => !el)) {
-            alert("Error: Faltan elementos del DOM. App no puede iniciar."); return;
-        }
-        setupEventListeners();
-        await loadData(); // Carga inicial y primer renderizado
-        console.log("DK Fest Tracker: App inicializada.");
-    }
-
-    initApp();
+    // Inicialización
+    renderTable(localAnniversaries);
 });
