@@ -161,14 +161,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const potentialTasks = AppState.festivals.filter(f => {
             if (f.status !== 'Pendiente') return false;
             const festivalMonth = parseInt(f.month, 10) - 1;
-            let targetMonthFuture = (currentMonth + 4) % 12;
-            let targetYearFuture = currentYear;
-            if (currentMonth + 4 >= 12) targetYearFuture++;
 
-            return festivalMonth === targetMonthFuture && (!f.year || parseInt(f.year, 10) === targetYearFuture);
+            // Check if festival is in the next 4 months (current month + 3 following)
+            for (let i = 0; i < 4; i++) {
+                let targetMonth = (currentMonth + i) % 12;
+                let targetYear = currentYear;
+                if (currentMonth + i >= 12) targetYear++;
+
+                if (festivalMonth === targetMonth && (!f.year || parseInt(f.year, 10) === targetYear)) {
+                    return true;
+                }
+            }
+            return false;
         });
 
-        console.log(`DK Fest Tracker: ${potentialTasks.length} tareas potenciales para 4 meses en el futuro.`);
+        console.log(`DK Fest Tracker: ${potentialTasks.length} tareas potenciales encontradas en los próximos 4 meses.`);
         AppState.dailyTasks = potentialTasks.sort(() => 0.5 - Math.random()).slice(0, 10);
         console.log(`DK Fest Tracker: ${AppState.dailyTasks.length} tareas diarias seleccionadas.`);
 
