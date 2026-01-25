@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from flask import Flask, jsonify, request, render_template, abort
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
@@ -37,6 +38,13 @@ def index():
 def get_festivals():
     return jsonify(festivals_data)
 
+@app.route('/api/festivals/<int:festival_id>', methods=['DELETE'])
+def delete_festival(festival_id):
+    global festivals_data
+    festivals_data = [f for f in festivals_data if f.get('id') != festival_id]
+    save_festivals()
+    return '', 204
+
 @app.route('/api/festivals/<int:festival_id>', methods=['PUT'])
 def update_festival_data(festival_id):
     global festivals_data
@@ -53,22 +61,48 @@ def update_festival_data(festival_id):
     if not festival_to_update:
         abort(404, description=f"Fiesta con ID {festival_id} no encontrada.")
 
-    # Campos que se pueden actualizar desde el modal de edición
-    editable_fields = ['contactName', 'contactPhone', 'email', 'status', 'notes']
-    for field in editable_fields:
+    # Campos que se pueden actualizar
+    fields_to_update = [
+        'name', 'day', 'month', 'location', 'province',
+        'directorName', 'contactPhone', 'email', 'facebook',
+        'status', 'notes'
+    ]
+    for field in fields_to_update:
         if field in data:
             festival_to_update[field] = data[field]
 
-    # Asegurar que los campos no editables se mantengan si no vienen, o tomar del original
-    # (Esto es más para PUT, pero bueno tenerlo en cuenta)
-    # festival_to_update['name'] = data.get('name', festival_to_update['name'])
-    # festival_to_update['month'] = data.get('month', festival_to_update['month'])
-    # festival_to_update['location'] = data.get('location', festival_to_update['location'])
-    # festival_to_update['province'] = data.get('province', festival_to_update['province'])
-
-
     save_festivals()
     return jsonify(festival_to_update)
+
+@app.route('/api/extract-info', methods=['POST'])
+def extract_info():
+    data = request.get_json()
+    if not data or 'text' not in data:
+        abort(400, description="No se proporcionó texto.")
+
+    text = data['text']
+    # Aquí iría la llamada real a la API de Claude si tuviéramos la Key.
+    # Por ahora, haremos una extracción básica con Regex o devolveremos un objeto vacío para que el usuario complete.
+
+    extracted = {
+        "directorName": "",
+        "contactPhone": "",
+        "email": "",
+        "facebook": ""
+    }
+
+    # Intento simple de extraer algo (ejemplo)
+    phone_match = re.search(r'(\+?\d[\d\s-]{7,})', text)
+    if phone_match:
+        extracted["contactPhone"] = phone_match.group(1).strip()
+
+    email_match = re.search(r'[\w\.-]+@[\w\.-]+\.\w+', text)
+    if email_match:
+        extracted["email"] = email_match.group(0)
+
+    # El usuario puede mejorar esto integrando Anthropic SDK aquí.
+
+    return jsonify(extracted)
 
 @app.route('/api/festivals', methods=['POST'])
 def add_new_festival():
@@ -90,13 +124,15 @@ def add_new_festival():
     new_festival = {
         "id": new_id,
         "name": data.get('name'),
+        "day": data.get('day'),
         "month": data.get('month'),
         "location": data.get('location'),
         "province": data.get('province'),
-        "contactName": data.get('contactName', ""),
+        "directorName": data.get('directorName', ""),
         "contactPhone": data.get('contactPhone', ""),
         "email": data.get('email', ""),
-        "status": data.get('status', "Pendiente"), # Por defecto a Pendiente
+        "facebook": data.get('facebook', ""),
+        "status": data.get('status', "Pendiente"),
         "notes": data.get('notes', "")
     }
 
@@ -104,6 +140,7 @@ def add_new_festival():
     save_festivals()
     return jsonify(new_festival), 201
 
+load_festivals()
+
 if __name__ == '__main__':
-    load_festivals()
     app.run(debug=True)
