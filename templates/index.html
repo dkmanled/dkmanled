@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DK Fest Tracker v2</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        .status-Exito { background-color: #166534; border-color: #22c55e; }
+        .status-Seguimiento { background-color: #854d0e; border-color: #eab308; }
+        .status-Descartado { background-color: #991b1b; border-color: #ef4444; }
+        .status-Pendiente { background-color: #1e293b; border-color: #475569; }
+
+        .card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:active {
+            transform: scale(0.98);
+        }
+
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="antialiased pb-24">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-30 bg-[#0f172a]/90 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-extrabold tracking-tighter">
+                <span class="text-green-400">DK</span> FEST <span class="text-slate-400 font-light text-sm">v2</span>
+            </h1>
+            <div class="flex gap-2">
+                <button id="view-tasks-btn" class="p-2 rounded-full bg-slate-800 text-green-400 hover:bg-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                </button>
+                <button id="view-all-btn" class="p-2 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-4">
+        <!-- AI Extraction Helper (Collapsible) -->
+        <section class="mb-6 bg-slate-800/50 rounded-xl border border-slate-700 overflow-hidden">
+            <button id="toggle-ai-btn" class="w-full px-4 py-2 text-sm font-semibold flex justify-between items-center text-slate-400">
+                <span>INTELIGENCIA ARTIFICIAL (CLAUDE)</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+            <div id="ai-section" class="p-4 hidden border-t border-slate-700">
+                <p class="text-xs text-slate-400 mb-2">Pega aquí noticias o textos para extraer datos automáticamente:</p>
+                <textarea id="ai-input" rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-green-500 mb-2" placeholder="Ej: El director de cultura de Tandil, Juan Perez, anunció..."></textarea>
+                <button id="ai-extract-btn" class="w-full py-2 bg-green-600 text-white rounded-lg font-bold text-sm hover:bg-green-500 transition">EXTRAER DATOS</button>
+                <div id="ai-results" class="mt-3 hidden text-xs bg-slate-900 p-2 rounded border border-slate-700">
+                    <!-- Results will be shown here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Search / Filter -->
+        <section id="search-section" class="mb-6 sticky top-[60px] z-20 py-2 bg-[#0f172a]/95">
+            <div class="relative">
+                <input type="text" id="search-input" placeholder="Buscar fiesta, ciudad o provincia..." class="w-full bg-slate-800 border border-slate-700 rounded-2xl py-3 pl-12 pr-4 outline-none focus:ring-2 focus:ring-green-500 transition shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 absolute left-4 top-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+            <div id="month-chips" class="flex gap-2 overflow-x-auto py-3 no-scrollbar">
+                <!-- Month chips will be injected here -->
+            </div>
+        </section>
+
+        <!-- Dynamic Content Title -->
+        <h2 id="view-title" class="text-2xl font-black mb-4 px-2">Próximos 30 Días</h2>
+
+        <!-- Grid of Cards -->
+        <div id="festivals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Cards will be injected here -->
+        </div>
+
+        <!-- No Results -->
+        <div id="no-results" class="hidden text-center py-20">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-slate-700 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 9.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-slate-500">No se encontraron eventos.</p>
+        </div>
+    </main>
+
+    <!-- Floating Add Button -->
+    <button id="floating-add-btn" class="fixed bottom-6 right-6 w-16 h-16 bg-green-500 text-[#0f172a] rounded-full shadow-2xl flex items-center justify-center hover:bg-green-400 transition-all z-40 transform hover:rotate-90">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4" />
+        </svg>
+    </button>
+
+    <!-- Edit/Add Modal -->
+    <div id="festival-modal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+        <div class="modal-overlay absolute inset-0"></div>
+        <div class="modal-content relative w-full max-w-lg bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden border-t sm:border border-slate-700 max-h-[90vh] flex flex-col">
+            <div class="p-6 overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 id="modal-heading" class="text-xl font-bold">Editar Evento</h3>
+                    <button id="close-modal-btn" class="text-slate-400 p-2">&times;</button>
+                </div>
+
+                <form id="festival-form" class="space-y-4">
+                    <input type="hidden" id="form-id">
+
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nombre de la Fiesta</label>
+                            <input type="text" id="form-name" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Día</label>
+                                <input type="number" id="form-day" min="1" max="31" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Mes</label>
+                                <select id="form-month" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500">
+                                    <option value="1">Enero</option>
+                                    <option value="2">Febrero</option>
+                                    <option value="3">Marzo</option>
+                                    <option value="4">Abril</option>
+                                    <option value="5">Mayo</option>
+                                    <option value="6">Junio</option>
+                                    <option value="7">Julio</option>
+                                    <option value="8">Agosto</option>
+                                    <option value="9">Septiembre</option>
+                                    <option value="10">Octubre</option>
+                                    <option value="11">Noviembre</option>
+                                    <option value="12">Diciembre</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Localidad</label>
+                                <input type="text" id="form-location" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Provincia</label>
+                                <input type="text" id="form-province" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500">
+                            </div>
+                        </div>
+
+                        <hr class="border-slate-800">
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Director de Cultura (2023-2026)</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="form-directorName" class="flex-1 bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500" placeholder="Nombre completo">
+                                <button type="button" id="google-search-btn" class="bg-blue-600 p-3 rounded-xl hover:bg-blue-500 transition" title="Buscar en Google">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.908 3.152-1.928 4.176-1.228 1.216-3.144 2.568-6.952 2.568-6.136 0-10.92-4.936-10.92-11.08s4.784-11.08 10.92-11.08c3.328 0 5.688 1.312 7.472 3.032l2.312-2.312c-2.024-1.944-4.704-3.416-9.784-3.416-8.128 0-14.736 6.648-14.736 14.784s6.608 14.784 14.736 14.784c4.384 0 7.712-1.44 10.304-4.144 2.672-2.672 3.52-6.472 3.52-9.6 0-.928-.08-1.808-.224-2.64h-13.52z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Teléfono</label>
+                                <input type="text" id="form-contactPhone" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+                                <input type="email" id="form-email" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Link Facebook</label>
+                            <input type="text" id="form-facebook" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500" placeholder="https://facebook.com/...">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Estado de Gestión</label>
+                            <select id="form-status" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500 font-bold">
+                                <option value="Pendiente">PENDIENTE (Gris)</option>
+                                <option value="Exito">ÉXITO / CONTACTADO (Verde)</option>
+                                <option value="Seguimiento">EN SEGUIMIENTO (Amarillo)</option>
+                                <option value="Descartado">RECHAZADO / DESCARTADO (Rojo)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Notas</label>
+                            <textarea id="form-notes" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 outline-none focus:border-green-500"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="p-6 bg-slate-800 border-t border-slate-700 flex gap-3">
+                <button id="delete-btn" class="hidden px-4 py-3 bg-red-900/50 text-red-400 rounded-xl font-bold text-sm hover:bg-red-900 transition">ELIMINAR</button>
+                <div class="flex-1"></div>
+                <button id="cancel-form-btn" class="px-6 py-3 text-slate-400 font-bold text-sm">CANCELAR</button>
+                <button type="submit" form="festival-form" class="px-8 py-3 bg-green-500 text-[#0f172a] rounded-xl font-black text-sm hover:bg-green-400 transition shadow-lg">GUARDAR</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
