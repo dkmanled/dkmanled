@@ -51,6 +51,8 @@ def init_db():
         email TEXT,
         instagram TEXT,
         facebook TEXT,
+        twitter TEXT,
+        contacto_nombre TEXT,
         rating REAL,
         user_ratings_total INTEGER,
         score INTEGER,
