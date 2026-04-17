@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DK Fest Tracker v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         body {
@@ -28,6 +30,13 @@
             background-color: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(4px);
         }
+
+        #map-view {
+            height: 500px;
+            width: 100%;
+            border-radius: 1.5rem;
+            z-index: 10;
+        }
     </style>
 </head>
 <body class="antialiased pb-24">
@@ -47,6 +56,11 @@
                 <button id="view-all-btn" class="p-2 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+                <button id="view-map-btn" class="p-2 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A2 2 0 013 15.487V6.513a2 2 0 011.106-1.789L9 2l5 2.5L20 2v9M9 20l5-2.5M9 20V4.5M14 17.5V13m4 6v-7m4 2v-4" />
                     </svg>
                 </button>
             </div>
@@ -92,6 +106,9 @@
         <div id="festivals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Cards will be injected here -->
         </div>
+
+        <!-- Map View -->
+        <div id="map-view" class="hidden shadow-2xl border-2 border-slate-800"></div>
 
         <!-- No Results -->
         <div id="no-results" class="hidden text-center py-20">
