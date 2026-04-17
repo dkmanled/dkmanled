@@ -51,6 +51,8 @@ def init_db():
         email TEXT,
         instagram TEXT,
         facebook TEXT,
+        twitter TEXT,
+        contacto_nombre TEXT,
         rating REAL,
         user_ratings_total INTEGER,
         score INTEGER,
@@ -58,6 +60,27 @@ def init_db():
         fecha_hallazgo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
+
+    # Migración: Agregar columnas si no existen
+    try:
+        cursor.execute("ALTER TABLE locales ADD COLUMN twitter TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE locales ADD COLUMN contacto_nombre TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE locales ADD COLUMN whatsapp TEXT")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE locales ADD COLUMN email TEXT")
+    except sqlite3.OperationalError:
+        pass
 
     # Tabla de Búsquedas Realizadas (Historial para no repetir)
     cursor.execute('''
