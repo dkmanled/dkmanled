@@ -3,13 +3,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const AppState = {
         festivals: [],
         filteredFestivals: [],
-        view: 'tasks', // 'tasks' (Next 30 days) or 'all'
+        view: 'tasks', // 'tasks' (Next 30 days), 'all', or 'map'
         selectedMonth: null,
         searchTerm: ''
     };
 
+    let map = null;
+    let mapMarkers = [];
+
+    const PROVINCE_COORDS = {
+        "BUENOS AIRES": [-34.9214, -57.9545],
+        "CABA": [-34.6037, -58.3816],
+        "CATAMARCA": [-28.4696, -65.7852],
+        "CHACO": [-27.4514, -58.9866],
+        "CHUBUT": [-43.3002, -65.1023],
+        "CORDOBA": [-31.4135, -64.1811],
+        "CORRIENTES": [-27.4692, -58.8306],
+        "ENTRE RIOS": [-31.7333, -60.5333],
+        "FORMOSA": [-26.1849, -58.1731],
+        "JUJUY": [-24.1858, -65.2995],
+        "LA PAMPA": [-36.6167, -64.2833],
+        "LA RIOJA": [-29.4111, -66.8506],
+        "MENDOZA": [-32.8895, -68.8458],
+        "MISIONES": [-27.3671, -55.8961],
+        "NEUQUEN": [-38.9516, -68.0591],
+        "RIO NEGRO": [-40.8135, -62.9967],
+        "SALTA": [-24.7859, -65.4117],
+        "SAN JUAN": [-31.5375, -68.5364],
+        "SAN LUIS": [-33.295, -66.3356],
+        "SANTA CRUZ": [-51.6226, -69.2181],
+        "SANTA FE": [-31.6333, -60.7],
+        "SANTIAGO DEL ESTERO": [-27.7833, -64.2667],
+        "TIERRA DEL FUEGO": [-54.8019, -68.303],
+        "TUCUMAN": [-26.8241, -65.2226]
+    };
+
     // DOM Elements
     const festivalsGrid = document.getElementById('festivals-grid');
+    const mapView = document.getElementById('map-view');
     const searchInput = document.getElementById('search-input');
     const monthChips = document.getElementById('month-chips');
     const viewTitle = document.getElementById('view-title');
@@ -17,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const viewTasksBtn = document.getElementById('view-tasks-btn');
     const viewAllBtn = document.getElementById('view-all-btn');
+    const viewMapBtn = document.getElementById('view-map-btn');
     const floatingAddBtn = document.getElementById('floating-add-btn');
 
     // Modal Elements
@@ -42,6 +74,13 @@ document.addEventListener('DOMContentLoaded', () => {
         renderMonthChips();
         await fetchFestivals();
         setupEventListeners();
+
+        // Expose modal opener for Leaflet popups
+        window.appOpenModalById = (id) => {
+            const f = AppState.festivals.find(fest => fest.id === id);
+            if (f) openModal(f);
+        };
+
         render();
     }
 
@@ -59,7 +98,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- RENDER FUNCTIONS ---
     function render() {
         filterData();
-        renderGrid();
+
+        if (AppState.view === 'map') {
+            festivalsGrid.classList.add('hidden');
+            mapView.classList.remove('hidden');
+            noResults.classList.add('hidden');
+            initMap();
+            updateMap();
+        } else {
+            festivalsGrid.classList.remove('hidden');
+            mapView.classList.add('hidden');
+            renderGrid();
+        }
+
         updateUIState();
     }
 
@@ -191,18 +242,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateUIState() {
+        // Reset all buttons
+        [viewTasksBtn, viewAllBtn, viewMapBtn].forEach(btn => {
+            btn.classList.remove('bg-green-500', 'text-[#0f172a]');
+            btn.classList.add('bg-slate-800', 'text-slate-300');
+        });
+        viewTasksBtn.classList.remove('text-slate-300');
+        viewTasksBtn.classList.add('text-green-400');
+
         if (AppState.view === 'tasks') {
             viewTasksBtn.classList.add('bg-green-500', 'text-[#0f172a]');
             viewTasksBtn.classList.remove('bg-slate-800', 'text-green-400');
-            viewAllBtn.classList.add('bg-slate-800', 'text-slate-300');
-            viewAllBtn.classList.remove('bg-green-500', 'text-[#0f172a]');
             viewTitle.textContent = "Próximos Eventos (Pendientes)";
-        } else {
+        } else if (AppState.view === 'all') {
             viewAllBtn.classList.add('bg-green-500', 'text-[#0f172a]');
             viewAllBtn.classList.remove('bg-slate-800', 'text-slate-300');
-            viewTasksBtn.classList.add('bg-slate-800', 'text-green-400');
-            viewTasksBtn.classList.remove('bg-green-500', 'text-[#0f172a]');
             viewTitle.textContent = AppState.selectedMonth ? `Eventos de ${MONTH_NAMES[AppState.selectedMonth - 1]}` : "Todos los Eventos";
+        } else if (AppState.view === 'map') {
+            viewMapBtn.classList.add('bg-green-500', 'text-[#0f172a]');
+            viewMapBtn.classList.remove('bg-slate-800', 'text-slate-300');
+            viewTitle.textContent = "Mapa de Festivales";
         }
     }
 
@@ -241,6 +300,84 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = '';
     }
 
+    // --- MAP FUNCTIONS ---
+    function initMap() {
+        if (map) return;
+        map = L.map('map', { zoomControl: false }).setView([-38.4161, -63.6167], 5);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+    }
+
+    function updateMap() {
+        if (!map) return;
+
+        // Clear existing markers
+        mapMarkers.forEach(m => map.removeLayer(m));
+        mapMarkers = [];
+
+        // Group festivals by province to show in popup
+        const groups = {};
+        AppState.filteredFestivals.forEach(f => {
+            const prov = normalizeProvince(f.province);
+            if (prov) {
+                if (!groups[prov]) groups[prov] = [];
+                groups[prov].push(f);
+            }
+        });
+
+        Object.keys(groups).forEach(provName => {
+            const coords = PROVINCE_COORDS[provName];
+            if (!coords) {
+                console.warn(`No coords for province: ${provName}`);
+                return;
+            }
+
+            const fests = groups[provName];
+            const marker = L.circleMarker(coords, {
+                radius: Math.min(25, 8 + Math.sqrt(fests.length) * 2),
+                fillColor: '#22c55e',
+                color: '#fff',
+                weight: 1,
+                opacity: 0.8,
+                fillOpacity: 0.5
+            }).addTo(map);
+
+            const popupContent = `
+                <div class="map-popup text-sm">
+                    <h4 class="font-bold border-b border-slate-700 pb-1 mb-2 text-green-400">${provName} (${fests.length})</h4>
+                    <ul class="max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                        ${fests.map(f => `
+                            <li class="mb-2 last:mb-0">
+                                <a href="#" onclick="appOpenModalById(${f.id}); return false;" class="hover:text-green-400 block transition">
+                                    <div class="font-bold leading-tight">${f.name}</div>
+                                    <div class="text-[10px] text-slate-400">${f.day || '??'} ${MONTH_NAMES[f.month - 1]}</div>
+                                </a>
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            `;
+            marker.bindPopup(popupContent, { className: 'map-popup' });
+            mapMarkers.push(marker);
+        });
+    }
+
+    function normalizeProvince(prov) {
+        if (!prov) return "";
+        let p = prov.toUpperCase().trim()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Remove accents
+
+        p = p.replace("PROVINCIA DE ", "");
+
+        if (p.includes("CIUDAD DE BUENOS AIRES") || p === "C.A.B.A." || p === "CABA") return "CABA";
+        if (p.includes("TIERRA DEL FUEGO")) return "TIERRA DEL FUEGO";
+        if (p === "ISLA APIPE GRANDE") return "CORRIENTES";
+
+        return p;
+    }
+
     // --- EVENT LISTENERS ---
     function setupEventListeners() {
         // Navigation
@@ -251,6 +388,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         viewAllBtn.addEventListener('click', () => {
             AppState.view = 'all';
+            render();
+        });
+
+        viewMapBtn.addEventListener('click', () => {
+            AppState.view = 'map';
             render();
         });
 
@@ -272,7 +414,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const month = chip.dataset.month;
             AppState.selectedMonth = month === 'all' ? null : parseInt(month);
-            AppState.view = 'all'; // Switch to all view when selecting month
+
+            // If in tasks view, switch to all view. If in map view, stay in map view.
+            if (AppState.view === 'tasks') {
+                AppState.view = 'all';
+            }
+
             render();
         });
 
