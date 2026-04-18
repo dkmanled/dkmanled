@@ -45,7 +45,7 @@ def run_spider(comunas, radius):
             has_phone = bool(place.get('phoneNumber'))
 
             if not has_phone and API_KEYS["SERPER"]:
-                search_query = f"{place.get('title')} {nombre_comuna} instagram facebook"
+                search_query = f"{place.get('title')} {nombre_comuna} instagram facebook twitter"
                 social_info = search_social_serper(search_query, API_KEYS["SERPER"])
 
             # 3. Procesar con IA (OpenRouter)
@@ -64,6 +64,10 @@ def run_spider(comunas, radius):
                     "latitud": place.get('latitude'),
                     "longitud": place.get('longitude'),
                     "telefono": place.get('phoneNumber') or (enriched_data.get('telefono') if enriched_data else ""),
+                    "whatsapp": enriched_data.get('whatsapp') if enriched_data else "",
+                    "email": enriched_data.get('email') if enriched_data else "",
+                    "twitter": enriched_data.get('twitter') if enriched_data else "",
+                    "contacto_nombre": enriched_data.get('contacto_nombre') if enriched_data else "",
                     "rating": place.get('rating'),
                     "user_ratings_total": place.get('ratingCount'),
                     "tipo": enriched_data.get('tipo') if enriched_data else "Pendiente",
@@ -77,13 +81,16 @@ def run_spider(comunas, radius):
                 conn.execute('''
                     INSERT INTO locales (
                         google_place_id, nombre, direccion, comuna, latitud, longitud,
-                        telefono, rating, user_ratings_total, tipo, apto_show,
+                        telefono, whatsapp, email, twitter, contacto_nombre,
+                        rating, user_ratings_total, tipo, apto_show,
                         justificacion, instagram, facebook, score
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     final_data["google_place_id"], final_data["nombre"], final_data["direccion"],
                     final_data["comuna"], final_data["latitud"], final_data["longitud"],
-                    final_data["telefono"], final_data["rating"], final_data["user_ratings_total"],
+                    final_data["telefono"], final_data["whatsapp"], final_data["email"],
+                    final_data["twitter"], final_data["contacto_nombre"],
+                    final_data["rating"], final_data["user_ratings_total"],
                     final_data["tipo"], final_data["apto_show"], final_data["justificacion"],
                     final_data["instagram"], final_data["facebook"], final_data["score"]
                 ))
