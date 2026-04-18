@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DK Fest Tracker v2</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
         body {
@@ -28,6 +30,9 @@
             background-color: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(4px);
         }
+        #map { height: 500px; width: 100%; border-radius: 1.5rem; border: 2px solid #334155; }
+        .map-popup .leaflet-popup-content-wrapper { background: #1e293b; color: white; border-radius: 0.75rem; }
+        .map-popup .leaflet-popup-tip { background: #1e293b; }
     </style>
 </head>
 <body class="antialiased pb-24">
@@ -47,6 +52,12 @@
                 <button id="view-all-btn" class="p-2 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+                <button id="view-map-btn" class="p-2 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                 </button>
             </div>
@@ -91,6 +102,11 @@
         <!-- Grid of Cards -->
         <div id="festivals-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Cards will be injected here -->
+        </div>
+
+        <!-- Map View -->
+        <div id="map-view" class="hidden">
+            <div id="map" class="z-0"></div>
         </div>
 
         <!-- No Results -->
