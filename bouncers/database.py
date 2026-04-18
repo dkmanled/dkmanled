@@ -49,6 +49,8 @@ def init_db():
         telefono TEXT,
         whatsapp TEXT,
         email TEXT,
+        twitter TEXT,
+        contacto_nombre TEXT,
         instagram TEXT,
         facebook TEXT,
         rating REAL,

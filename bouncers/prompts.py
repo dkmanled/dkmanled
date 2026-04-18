@@ -27,11 +27,12 @@ Cuando recibís información de un negocio (nombre, dirección, ciudad, rating, 
    - Teléfono
    - WhatsApp
    - Email
-   - Nombre de responsable (si aparece)
+   - Nombre de responsable / Dueño / Contacto (si aparece)
 
 4. Analizar si el lugar tiene presencia en redes sociales:
    - Detectar Instagram
    - Detectar Facebook
+   - Detectar Twitter (X)
    - Detectar otras redes relevantes
 
 Si no se encuentran explícitamente, inferir posibles URLs basadas en el nombre del negocio y ciudad.
@@ -60,6 +61,8 @@ Responder SIEMPRE en formato JSON estructurado con este esquema:
   "telefono": "",
   "whatsapp": "",
   "email": "",
+  "twitter": "",
+  "contacto_nombre": "",
   "instagram": "",
   "facebook": "",
   "score": 0-100
