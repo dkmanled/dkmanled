@@ -16,6 +16,25 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 10px; }
         .card-boliche { transition: transform 0.2s; }
         .card-boliche:hover { transform: translateY(-2px); }
+
+        /* Radar Animation */
+        @keyframes radar-pulse {
+            0% { transform: scale(0); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+        .radar-wave {
+            position: absolute;
+            border: 2px solid #4f46e5;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: radar-pulse 3s infinite;
+            width: 100px;
+            height: 100px;
+            margin-top: -50px;
+            margin-left: -50px;
+        }
+        .radar-wave:nth-child(2) { animation-delay: 1s; }
+        .radar-wave:nth-child(3) { animation-delay: 2s; }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen">
@@ -125,6 +144,8 @@
         }).addTo(map);
 
         let markers = [];
+        let pollingInterval = null;
+        let radarCircles = [];
 
         function setRadius(r) {
             document.getElementById('search-radius').value = r;
@@ -205,6 +226,10 @@
             btn.innerText = "RADAR EN CURSO...";
             btn.disabled = true;
 
+            // Clear previous radar circles
+            radarCircles.forEach(c => map.removeLayer(c));
+            radarCircles = [];
+
             try {
                 const res = await fetch('/api/radar', {
                     method: 'POST',
@@ -215,25 +240,60 @@
 
                 if(data.error) {
                     alert(data.error);
+                    btn.innerText = "INICIAR SPIDER CHILE";
+                    btn.disabled = false;
                 } else {
                     map.setView([data.centro.lat, data.centro.lng], 10);
-                    // Dibujar círculo de radio
-                    L.circle([data.centro.lat, data.centro.lng], {
+
+                    // Main radius circle
+                    const mainCircle = L.circle([data.centro.lat, data.centro.lng], {
                         radius: radius * 1000,
                         color: '#4f46e5',
                         fillColor: '#4f46e5',
                         fillOpacity: 0.1
                     }).addTo(map);
+                    radarCircles.push(mainCircle);
 
+                    // Add Radar Animation via custom DivIcon
+                    const radarIcon = L.divIcon({
+                        className: 'radar-container',
+                        html: '<div class="radar-wave"></div><div class="radar-wave"></div><div class="radar-wave"></div>',
+                        iconSize: [0, 0]
+                    });
+                    const radarMarker = L.marker([data.centro.lat, data.centro.lng], { icon: radarIcon }).addTo(map);
+                    radarCircles.push(radarMarker);
+
+                    startPolling();
                     alert(`Radar activado. Cubriendo ${data.total_comunas} comunas en un radio de ${radius}km.`);
                 }
             } catch (e) {
                 console.error(e);
-            } finally {
                 btn.innerText = "INICIAR SPIDER CHILE";
                 btn.disabled = false;
             }
         });
+
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = setInterval(async () => {
+                await loadLocales();
+                // We could implement a way to stop polling if the spider finishes,
+                // but for now 1 minute of polling is enough for a demo/task
+            }, 3000);
+
+            // Stop polling after 2 minutes to save resources
+            setTimeout(() => {
+                clearInterval(pollingInterval);
+                const btn = document.getElementById('start-scan');
+                btn.innerText = "INICIAR SPIDER CHILE";
+                btn.disabled = false;
+                radarCircles.forEach(c => {
+                    if (c.getElement && c.getElement().classList.contains('radar-container')) {
+                        map.removeLayer(c);
+                    }
+                });
+            }, 120000);
+        }
 
         // Carga inicial
         loadLocales();
