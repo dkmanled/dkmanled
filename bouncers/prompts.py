@@ -23,15 +23,16 @@ Cuando recibís información de un negocio (nombre, dirección, ciudad, rating, 
    - apto_show: true / false
    - justificación breve
 
-3. Detectar y extraer datos de contacto si están presentes en el texto:
+3. Detectar y extraer datos de contacto si están presentes en el texto, buscando especialmente el nombre del dueño o administrador en las bios:
    - Teléfono
    - WhatsApp
    - Email
-   - Nombre de responsable (si aparece)
+   - contacto_nombre: Nombre de responsable, dueño o manager (si aparece)
 
 4. Analizar si el lugar tiene presencia en redes sociales:
    - Detectar Instagram
    - Detectar Facebook
+   - Detectar Twitter/X
    - Detectar otras redes relevantes
 
 Si no se encuentran explícitamente, inferir posibles URLs basadas en el nombre del negocio y ciudad.
@@ -62,6 +63,8 @@ Responder SIEMPRE en formato JSON estructurado con este esquema:
   "email": "",
   "instagram": "",
   "facebook": "",
+  "twitter": "",
+  "contacto_nombre": "",
   "score": 0-100
 }
 

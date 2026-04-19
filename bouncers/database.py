@@ -51,6 +51,8 @@ def init_db():
         email TEXT,
         instagram TEXT,
         facebook TEXT,
+        twitter TEXT,
+        contacto_nombre TEXT,
         rating REAL,
         user_ratings_total INTEGER,
         score INTEGER,
@@ -69,6 +71,31 @@ def init_db():
         fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
+
+    conn.commit()
+    conn.close()
+
+def migrate_db():
+    """Migraciones defensivas para agregar columnas faltantes"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Obtener columnas actuales
+    cursor.execute("PRAGMA table_info(locales)")
+    columns = [row[1] for row in cursor.fetchall()]
+
+    # Columnas a asegurar
+    new_columns = [
+        ('whatsapp', 'TEXT'),
+        ('email', 'TEXT'),
+        ('twitter', 'TEXT'),
+        ('contacto_nombre', 'TEXT')
+    ]
+
+    for col_name, col_type in new_columns:
+        if col_name not in columns:
+            print(f"Migración: Agregando columna {col_name} a la tabla locales...")
+            cursor.execute(f"ALTER TABLE locales ADD COLUMN {col_name} {col_type}")
 
     conn.commit()
     conn.close()

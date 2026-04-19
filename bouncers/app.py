@@ -4,7 +4,7 @@ import sqlite3
 import math
 import threading
 import time
-from database import get_db_connection, init_db
+from database import get_db_connection, init_db, migrate_db
 from seed_geo import populate_geo
 from scanner import search_places_serper, search_social_serper, process_with_openrouter
 
@@ -22,33 +22,31 @@ def run_spider(comunas, radius):
         print("Spider cancelado: SERPER_API_KEY no configurada.")
         return
 
-    for comuna in comunas:
-        nombre_comuna = comuna['nombre']
-        print(f"Spider: Escaneando {nombre_comuna}...")
+    conn = get_db_connection()
+    try:
+        for comuna in comunas:
+            nombre_comuna = comuna['nombre']
+            print(f"Spider: Escaneando {nombre_comuna}...")
 
-        # 1. Buscar en Google Maps
-        query = f"discoteca discoteque nightclub boliche en {nombre_comuna}, Chile"
-        places = search_places_serper(query, API_KEYS["SERPER"])
+            # 1. Buscar en Google Maps
+            query = f"discoteca discoteque nightclub boliche en {nombre_comuna}, Chile"
+            places = search_places_serper(query, API_KEYS["SERPER"])
 
-        for place in places:
-            # Evitar duplicados por google_place_id
-            place_id = place.get('cid') # Serper usa cid como id único de maps
-            conn = get_db_connection()
-            exists = conn.execute('SELECT id FROM locales WHERE google_place_id = ?', (str(place_id),)).fetchone()
+            for place in places:
+                # Evitar duplicados por google_place_id
+                place_id = place.get('cid') # Serper usa cid como id único de maps
+                exists = conn.execute('SELECT id FROM locales WHERE google_place_id = ?', (str(place_id),)).fetchone()
 
-            if exists:
-                conn.close()
-                continue
+                if exists:
+                    continue
 
-            # 2. Si no tiene teléfono, buscar en Google Search (Sabueso)
+            # 2. Buscar en Google Search (Sabueso) para encontrar RRSS y contacto
             social_info = {}
-            has_phone = bool(place.get('phoneNumber'))
-
-            if not has_phone and API_KEYS["SERPER"]:
-                search_query = f"{place.get('title')} {nombre_comuna} instagram facebook"
+            if API_KEYS["SERPER"]:
+                search_query = f"{place.get('title')} {nombre_comuna} instagram facebook twitter"
                 social_info = search_social_serper(search_query, API_KEYS["SERPER"])
 
-            # 3. Procesar con IA (OpenRouter)
+            # 3. Procesar con IA (OpenRouter) para enriquecer perfil
             enriched_data = {}
             if API_KEYS["OPENROUTER"]:
                 raw_text = f"Nombre: {place.get('title')}, Dirección: {place.get('address')}, Rating: {place.get('rating')}, PhoneInMaps: {place.get('phoneNumber')}, InfoExtra: {social_info}"
@@ -64,37 +62,45 @@ def run_spider(comunas, radius):
                     "latitud": place.get('latitude'),
                     "longitud": place.get('longitude'),
                     "telefono": place.get('phoneNumber') or (enriched_data.get('telefono') if enriched_data else ""),
+                    "whatsapp": enriched_data.get('whatsapp') if enriched_data else "",
+                    "email": enriched_data.get('email') if enriched_data else "",
+                    "instagram": enriched_data.get('instagram') if enriched_data else "",
+                    "facebook": enriched_data.get('facebook') if enriched_data else "",
+                    "twitter": enriched_data.get('twitter') if enriched_data else "",
+                    "contacto_nombre": enriched_data.get('contacto_nombre') if enriched_data else "",
                     "rating": place.get('rating'),
                     "user_ratings_total": place.get('ratingCount'),
                     "tipo": enriched_data.get('tipo') if enriched_data else "Pendiente",
                     "apto_show": enriched_data.get('apto_show') if enriched_data else False,
                     "justificacion": enriched_data.get('justificacion') if enriched_data else "",
-                    "instagram": enriched_data.get('instagram') if enriched_data else "",
-                    "facebook": enriched_data.get('facebook') if enriched_data else "",
                     "score": enriched_data.get('score') if enriched_data else 0
                 }
 
                 conn.execute('''
                     INSERT INTO locales (
                         google_place_id, nombre, direccion, comuna, latitud, longitud,
-                        telefono, rating, user_ratings_total, tipo, apto_show,
-                        justificacion, instagram, facebook, score
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        telefono, whatsapp, email, instagram, facebook, twitter, contacto_nombre,
+                        rating, user_ratings_total, tipo, apto_show,
+                        justificacion, score
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ''', (
                     final_data["google_place_id"], final_data["nombre"], final_data["direccion"],
                     final_data["comuna"], final_data["latitud"], final_data["longitud"],
-                    final_data["telefono"], final_data["rating"], final_data["user_ratings_total"],
+                    final_data["telefono"], final_data["whatsapp"], final_data["email"],
+                    final_data["instagram"], final_data["facebook"], final_data["twitter"],
+                    final_data["contacto_nombre"],
+                    final_data["rating"], final_data["user_ratings_total"],
                     final_data["tipo"], final_data["apto_show"], final_data["justificacion"],
-                    final_data["instagram"], final_data["facebook"], final_data["score"]
+                    final_data["score"]
                 ))
                 conn.commit()
             except Exception as e:
                 print(f"Error guardando local {place.get('title')}: {e}")
-            finally:
-                conn.close()
 
-        # Pequeño delay para no saturar APIs
-        time.sleep(1)
+            # Pequeño delay para no saturar APIs
+            time.sleep(1)
+    finally:
+        conn.close()
 
 @app.route('/')
 def index():
@@ -176,10 +182,14 @@ def start_radar():
     })
 
 if __name__ == '__main__':
-    # Inicialización automática
-    if not os.path.exists(os.path.join(os.path.dirname(__file__), 'bouncers.db')):
+    # Inicialización y Migración automática
+    db_exists = os.path.exists(os.path.join(os.path.dirname(__file__), 'bouncers.db'))
+    if not db_exists:
         print("Inicializando base de datos por primera vez...")
         init_db()
         populate_geo()
+
+    # Asegurar que todas las columnas existen independientemente de si se acaba de crear o no
+    migrate_db()
 
     app.run(debug=True, port=5001)
